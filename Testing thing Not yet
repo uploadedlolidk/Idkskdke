@@ -1,23 +1,29 @@
-local function string_find(s, p)
-	return string.find(s, p, nil, true)
+code
+Lua
+download
+content_copy
+expand_less
+
+local function string_find(s, pattern)
+	return string.find(s, pattern, nil, true)
 end
 
-local function ArrayToDict(t, hm, vo, ts)
+local function ArrayToDict(t, hydridMode, valueOverride, typeStrict)
 	local tmp = {}
-	if hm then
-		for a1, a2 in t do
-			if type(a1) == "number" then
-				tmp[a2] = vo or true
-			elseif type(a2) == "table" then
-				tmp[a1] = ArrayToDict(a2, hm)
+	if hydridMode then
+		for k, v in t do
+			if type(k) == "number" then
+				tmp[v] = valueOverride or true
+			elseif type(v) == "table" then
+				tmp[k] = ArrayToDict(v, hydridMode)
 			else
-				tmp[a1] = a2
+				tmp[k] = v
 			end
 		end
 	else
-		for _, k in t do
-			if not ts or ts and type(k) == ts then
-				tmp[k] = true
+		for _, key in t do
+			if not typeStrict or typeStrict and type(key) == typeStrict then
+				tmp[key] = true
 			end
 		end
 	end
@@ -53,12 +59,16 @@ local writefile = writefile
 local getscriptbytecode = global_container.getscriptbytecode
 local base64encode = global_container.base64encode
 local sha384
+
 local service = setmetatable({}, {
-	__index = function(self, n)
-		local o, s = pcall(Instance.new, n)
-		local S = o and s or game:GetService(n) or settings():GetService(n) or UserSettings():GetService(n)
+	__index = function(self, serviceName)
+		local p, s = pcall(Instance.new, serviceName)
+		local S = p and s
+			or game:GetService(serviceName)
+			or settings():GetService(serviceName)
+			or UserSettings():GetService(serviceName)
 		if S then
-			self[n] = S
+			self[serviceName] = S
 		end
 		return S
 	end,
@@ -67,19 +77,19 @@ local service = setmetatable({}, {
 local gethiddenproperty_fallback
 do
 	local UGCValidationService
-	gethiddenproperty_fallback = function(i, p)
+	gethiddenproperty_fallback = function(instance, propertyName)
 		if not UGCValidationService then
 			UGCValidationService = service.UGCValidationService
 		end
-		return UGCValidationService:GetPropertyValue(i, p)
+		return UGCValidationService:GetPropertyValue(instance, propertyName)
 	end
 	if gethiddenproperty then
-		local o, r = pcall(gethiddenproperty, workspace, "StreamOutBehavior")
-		if not o or r ~= nil and typeof(r) ~= "EnumItem" then
+		local p, r = pcall(gethiddenproperty, workspace, "StreamOutBehavior")
+		if not p or r ~= nil and typeof(r) ~= "EnumItem" then
 			gethiddenproperty = nil
 		else
-			o, r = pcall(gethiddenproperty, Instance.new("AnimationRigData", Instance.new("Folder")), "parent")
-			if o and r ~= nil and type(r) ~= "string" then
+			p, r = pcall(gethiddenproperty, Instance.new("AnimationRigData", Instance.new("Folder")), "parent")
+			if p and r ~= nil and type(r) ~= "string" then
 				gethiddenproperty = nil
 			end
 		end
@@ -87,41 +97,43 @@ do
 	local function benchmark(f1, f2, ...)
 		local ranking = table.create(2)
 		for i, f in { f1, f2 } do
-			local start = os.clock()
+			local s = os.clock()
 			for _ = 1, 50 do
 				f(...)
 			end
-			ranking[i] = { t = os.clock() - start, f = f }
+			ranking[i] = { t = os.clock() - s, f = f }
 		end
 		table.sort(ranking, function(a, b)
 			return a.t < b.t
 		end)
 		return ranking[1].f
 	end
+
 	local test_str = string.rep("\1\0\0\0\1\2\3\4\5\6\7", 50)
+
 	do
 		if not bit32.byteswap or not pcall(bit32.byteswap, 1) then
 			bit32 = table.clone(bit32)
-			local function tobit(n)
-				n %= (bit32.bxor(n, 32))
-				if 0x80000000 < n then
-					n -= bit32.bxor(n, 32)
+			local function tobit(num)
+				num %= (bit32.bxor(num, 32))
+				if 0x80000000 < num then
+					num -= bit32.bxor(num, 32)
 				end
-				return n
+				return num
 			end
-			bit32.byteswap = function(n)
-				local BS = 8
-				local MBV = 255
-				n %= bit32.bxor(2, 32)
-				local a = bit32.band(n, MBV)
-				n = bit32.rshift(n, BS)
-				local b = bit32.band(n, MBV)
-				n = bit32.rshift(n, BS)
-				local c = bit32.band(n, MBV)
-				n = bit32.rshift(n, BS)
-				local d = bit32.band(n, MBV)
-				n = tobit(bit32.lshift(bit32.lshift(bit32.lshift(a, BS) + b, BS) + c, BS) + d)
-				return n
+			bit32.byteswap = function(num)
+				local BYTE_SIZE = 8
+				local MAX_BYTE_VALUE = 255
+				num %= bit32.bxor(2, 32)
+				local a = bit32.band(num, MAX_BYTE_VALUE)
+				num = bit32.rshift(num, BYTE_SIZE)
+				local b = bit32.band(num, MAX_BYTE_VALUE)
+				num = bit32.rshift(num, BYTE_SIZE)
+				local c = bit32.band(num, MAX_BYTE_VALUE)
+				num = bit32.rshift(num, BYTE_SIZE)
+				local d = bit32.band(num, MAX_BYTE_VALUE)
+				num = tobit(bit32.lshift(bit32.lshift(bit32.lshift(a, BYTE_SIZE) + b, BYTE_SIZE) + c, BYTE_SIZE) + d)
+				return num
 			end
 			table.freeze(bit32)
 		end
@@ -131,8 +143,8 @@ do
 				game:HttpGet("https://raw.githubusercontent.com/Reselim/Base64/master/Base64.lua", true),
 				"Base64"
 			)().encode
-			reselim_base64encode = function(r)
-				return buffer.tostring(b64_enc_buf(buffer.fromstring(r)))
+			reselim_base64encode = function(raw)
+				return buffer.tostring(b64_enc_buf(buffer.fromstring(raw)))
 			end
 		end)
 		if base64encode and base64encode("\1\0\0\0\1") == "AQAAAAE=" then
@@ -144,11 +156,12 @@ do
 		end
 		assert(base64encode, "base64encode not found")
 	end
+
 	do
 		local hash = global_container.hash
 		if hash then
-			sha384 = function(d)
-				return hash(d, "sha384")
+			sha384 = function(data)
+				return hash(data, "sha384")
 			end
 		end
 		local filename = "RequireOnlineModule"
@@ -174,10 +187,10 @@ local SharedStrings = {}
 local SharedString_identifiers = setmetatable({
 	identifier = 1e15,
 }, {
-	__index = function(self, s)
+	__index = function(self, str)
 		local Identifier = base64encode(tostring(self.identifier))
 		self.identifier += 1
-		self[s] = Identifier
+		self[str] = Identifier
 		return Identifier
 	end,
 })
@@ -196,18 +209,18 @@ local function __BIT(...)
 	return Value
 end
 
-local function GetRef(i)
-	local ref = referents[i]
+local function GetRef(instance)
+	local ref = referents[instance]
 	if not ref then
 		ref = ref_size
-		referents[i] = ref
+		referents[instance] = ref
 		ref_size += 1
 	end
 	return ref
 end
 
-local function index(self, i)
-	return self[i]
+local function index(self, index_name)
+	return self[index_name]
 end
 
 local CLIENT_VERSION = tonumber(string.split(version(), ".")[2])
@@ -268,22 +281,22 @@ local CFrame_Rotation_IDs = {
 }
 local Binary_Descriptors
 Binary_Descriptors = {
-	__SEQUENCE = function(r, vf, ks, e)
-		local kps = r.Keypoints
-		local kps_n = #kps
-		local len = 4 + (ks or 12) * kps_n
+	__SEQUENCE = function(raw, valueFormatter, keypointSize, Envelope)
+		local Keypoints = raw.Keypoints
+		local Keypoints_n = #Keypoints
+		local len = 4 + (keypointSize or 12) * Keypoints_n
 		local b = buffer.create(len)
 		local offset = 0
-		buffer.writeu32(b, offset, kps_n)
+		buffer.writeu32(b, offset, Keypoints_n)
 		offset += 4
-		for _, kp in kps do
-			buffer.writef32(b, offset, e or kp.Envelope)
+		for _, keypoint in Keypoints do
+			buffer.writef32(b, offset, Envelope or keypoint.Envelope)
 			offset += 4
-			buffer.writef32(b, offset, kp.Time)
+			buffer.writef32(b, offset, keypoint.Time)
 			offset += 4
-			local Value = kp.Value
-			if vf then
-				offset += vf(Value, b, offset)
+			local Value = keypoint.Value
+			if valueFormatter then
+				offset += valueFormatter(Value, b, offset)
 			else
 				buffer.writef32(b, offset, Value)
 				offset += 4
@@ -291,101 +304,98 @@ Binary_Descriptors = {
 		end
 		return b, len
 	end,
-	--------------------------------------------------------------
-	--------------------------------------------------------------
-	--------------------------------------------------------------
-	["string"] = function(r)
-		local raw_len = #r
+	["string"] = function(raw)
+		local raw_len = #raw
 		local len = 4 + raw_len
 		local b = buffer.create(len)
 		buffer.writeu32(b, 0, raw_len)
-		buffer.writestring(b, 4, r)
+		buffer.writestring(b, 4, raw)
 		return b, len
 	end,
-	["boolean"] = function(r)
+	["boolean"] = function(raw)
 		local b = buffer.create(1)
-		buffer.writeu8(b, 0, r and 1 or 0)
+		buffer.writeu8(b, 0, raw and 1 or 0)
 		return b, 1
 	end,
-	["number"] = function(r)
+	["number"] = function(raw)
 		local b = buffer.create(8)
-		buffer.writef64(b, 0, r)
+		buffer.writef64(b, 0, raw)
 		return b, 8
 	end,
-	["UDim"] = function(r)
+	["UDim"] = function(raw)
 		local b = buffer.create(8)
-		buffer.writef32(b, 0, r.Scale)
-		buffer.writei32(b, 4, r.Offset)
+		buffer.writef32(b, 0, raw.Scale)
+		buffer.writei32(b, 4, raw.Offset)
 		return b, 8
 	end,
-	["UDim2"] = function(r)
+	["UDim2"] = function(raw)
 		local b = buffer.create(16)
 		local UDim__descriptor = Binary_Descriptors.UDim
-		local X = UDim__descriptor(r.X)
+		local X = UDim__descriptor(raw.X)
 		buffer.copy(b, 0, X)
-		local Y = UDim__descriptor(r.Y)
+		local Y = UDim__descriptor(raw.Y)
 		buffer.copy(b, 8, Y)
 		return b, 16
 	end,
-	["Ray"] = function(r)
+	["Ray"] = function(raw)
 		local b = buffer.create(24)
 		local Vector3__descriptor = Binary_Descriptors.Vector3
-		local Origin = Vector3__descriptor(r.Origin)
+		local Origin = Vector3__descriptor(raw.Origin)
 		buffer.copy(b, 0, Origin)
-		local Direction = Vector3__descriptor(r.Direction)
+		local Direction = Vector3__descriptor(raw.Direction)
 		buffer.copy(b, 12, Direction)
 		return b, 24
 	end,
-	["Faces"] = function(r)
+	["Faces"] = function(raw)
 		local b = buffer.create(4)
-		buffer.writeu32(b, 0, __BIT(r.Right, r.Top, r.Back, r.Left, r.Bottom, r.Front))
+		buffer.writeu32(b, 0, __BIT(raw.Right, raw.Top, raw.Back, raw.Left, raw.Bottom, raw.Front))
 		return b, 4
 	end,
-	["Axes"] = function(r)
+	["Axes"] = function(raw)
 		local b = buffer.create(4)
-		buffer.writeu32(b, 0, __BIT(r.X, r.Y, r.Z))
+		buffer.writeu32(b, 0, __BIT(raw.X, raw.Y, raw.Z))
 		return b, 4
 	end,
-	["BrickColor"] = function(r)
+	["BrickColor"] = function(raw)
 		local b = buffer.create(4)
-		buffer.writeu32(b, 0, r.Number)
+		buffer.writeu32(b, 0, raw.Number)
 		return b, 4
 	end,
-	["Color3"] = function(r)
+	["Color3"] = function(raw)
 		local b = buffer.create(12)
-		buffer.writef32(b, 0, r.R)
-		buffer.writef32(b, 4, r.G)
-		buffer.writef32(b, 8, r.B)
+		buffer.writef32(b, 0, raw.R)
+		buffer.writef32(b, 4, raw.G)
+		buffer.writef32(b, 8, raw.B)
 		return b, 12
 	end,
-	["Vector2"] = function(r)
+	["Vector2"] = function(raw)
 		local b = buffer.create(8)
-		buffer.writef32(b, 0, r.X)
-		buffer.writef32(b, 4, r.Y)
+		buffer.writef32(b, 0, raw.X)
+		buffer.writef32(b, 4, raw.Y)
 		return b, 8
 	end,
-	["Vector3"] = function(r)
+	["Vector3"] = function(raw)
 		local b = buffer.create(12)
-		buffer.writef32(b, 0, r.X)
-		buffer.writef32(b, 4, r.Y)
-		buffer.writef32(b, 8, r.Z)
+		buffer.writef32(b, 0, raw.X)
+		buffer.writef32(b, 4, raw.Y)
+		buffer.writef32(b, 8, raw.Z)
 		return b, 12
 	end,
-	["Vector2int16"] = function(r)
+	["Vector2int16"] = function(raw)
 		local b = buffer.create(4)
-		buffer.writei16(b, 0, r.X)
-		buffer.writei16(b, 2, r.Y)
+		buffer.writei16(b, 0, raw.X)
+		buffer.writei16(b, 2, raw.Y)
 		return b, 4
 	end,
-	["Vector3int16"] = function(r)
+	["Vector3int16"] = function(raw)
 		local b = buffer.create(6)
-		buffer.writei16(b, 0, r.X)
-		buffer.writei16(b, 2, r.Y)
-		buffer.writei16(b, 4, r.Z)
+		buffer.writei16(b, 0, raw.X)
+		buffer.writei16(b, 2, raw.Y)
+		buffer.writei16(b, 4, raw.Z)
 		return b, 6
 	end,
-	["CFrame"] = function(r)
-		local X, Y, Z, R00, R01, R02, R10, R11, R12, R20, R21, R22 = r:GetComponents()
+	["CFrame"] = function(raw)
+		local X, Y, Z, R00, R01, R02, R10, R11, R12, R20, R21, R22 = raw:GetComponents()
 		local rotation_ID = CFrame_Rotation_IDs[string.pack("<fffffffff", R00, R01, R02, R10, R11, R12, R20, R21, R22)]
 		local len = rotation_ID and 13 or 49
 		local b = buffer.create(len)
@@ -408,94 +418,94 @@ Binary_Descriptors = {
 		end
 		return b, len
 	end,
-	["EnumItem"] = function(r)
-		local b_Name, Name_size = Binary_Descriptors.string(tostring(r.EnumType))
+	["EnumItem"] = function(raw)
+		local b_Name, Name_size = Binary_Descriptors.string(tostring(raw.EnumType))
 		local len = Name_size + 4
 		local b = buffer.create(len)
 		buffer.copy(b, 0, b_Name)
-		buffer.writeu32(b, Name_size, r.Value)
+		buffer.writeu32(b, Name_size, raw.Value)
 		return b, len
 	end,
 	["NumberSequence"] = nil,
-	["ColorSequence"] = function(r)
-		return Binary_Descriptors.__SEQUENCE(r, function(c3, b, offset)
-			buffer.copy(b, offset, Binary_Descriptors.Color3(c3))
+	["ColorSequence"] = function(raw)
+		return Binary_Descriptors.__SEQUENCE(raw, function(color3, b, offset)
+			buffer.copy(b, offset, Binary_Descriptors.Color3(color3))
 			return 12
 		end, 20, 0)
 	end,
-	["NumberRange"] = function(r)
+	["NumberRange"] = function(raw)
 		local b = buffer.create(8)
-		buffer.writef32(b, 0, r.Min)
-		buffer.writef32(b, 4, r.Max)
+		buffer.writef32(b, 0, raw.Min)
+		buffer.writef32(b, 4, raw.Max)
 		return b, 8
 	end,
-	["Rect"] = function(r)
+	["Rect"] = function(raw)
 		local b = buffer.create(16)
 		local Vector2__descriptor = Binary_Descriptors.Vector2
-		local Min = Vector2__descriptor(r.Min)
+		local Min = Vector2__descriptor(raw.Min)
 		buffer.copy(b, 0, Min)
-		local Max = Vector2__descriptor(r.Max)
+		local Max = Vector2__descriptor(raw.Max)
 		buffer.copy(b, 8, Max)
 		return b, 16
 	end,
-	["PhysicalProperties"] = function(r)
+	["PhysicalProperties"] = function(raw)
 		local len = 1
-		if r then
+		if raw then
 			len += 20
 		end
 		local b = buffer.create(len)
-		buffer.writeu8(b, 0, r and 1 or 0)
-		if r then
-			buffer.writef32(b, 1, r.Density)
-			buffer.writef32(b, 5, r.Friction)
-			buffer.writef32(b, 9, r.Elasticity)
-			buffer.writef32(b, 13, r.FrictionWeight)
-			buffer.writef32(b, 17, r.ElasticityWeight)
+		buffer.writeu8(b, 0, raw and 1 or 0)
+		if raw then
+			buffer.writef32(b, 1, raw.Density)
+			buffer.writef32(b, 5, raw.Friction)
+			buffer.writef32(b, 9, raw.Elasticity)
+			buffer.writef32(b, 13, raw.FrictionWeight)
+			buffer.writef32(b, 17, raw.ElasticityWeight)
 		end
 		return b, len
 	end,
-	["Region3"] = function(r)
+	["Region3"] = function(raw)
 		local b = buffer.create(24)
 		local Vector3__descriptor = Binary_Descriptors.Vector3
-		local Min = Vector3__descriptor(r.Min)
+		local Min = Vector3__descriptor(raw.Min)
 		buffer.copy(b, 0, Min)
-		local Max = Vector3__descriptor(r.Max)
+		local Max = Vector3__descriptor(raw.Max)
 		buffer.copy(b, 12, Max)
 		return b, 24
 	end,
-	["Region3int16"] = function(r)
+	["Region3int16"] = function(raw)
 		local b = buffer.create(12)
 		local Vector3int16__descriptor = Binary_Descriptors.Vector3int16
-		local Min = Vector3int16__descriptor(r.Min)
+		local Min = Vector3int16__descriptor(raw.Min)
 		buffer.copy(b, 0, Min)
-		local Max = Vector3int16__descriptor(r.Max)
+		local Max = Vector3int16__descriptor(raw.Max)
 		buffer.copy(b, 6, Max)
 		return b, 12
 	end,
-	["Font"] = 636 < CLIENT_VERSION and function(r)
+	["Font"] = 636 < CLIENT_VERSION and function(raw)
 		local string__descriptor = Binary_Descriptors.string
-		local b_Family, Family_size = string__descriptor(r.Family)
+		local b_Family, Family_size = string__descriptor(raw.Family)
 		local b_CachedFaceId, CachedFaceId_size = string__descriptor("")
 		local len = 3 + Family_size + CachedFaceId_size
 		local b = buffer.create(len)
-		local ok_w, weight = pcall(index, r, "Weight")
-		local ok_s, style = pcall(index, r, "Style")
+		local ok_w, weight = pcall(index, raw, "Weight")
+		local ok_s, style = pcall(index, raw, "Style")
 		buffer.writeu16(b, 0, ok_w and weight.Value or 0)
 		buffer.writeu8(b, 2, ok_s and style.Value or 0)
 		buffer.copy(b, 3, b_Family)
 		buffer.copy(b, 3 + Family_size, b_CachedFaceId)
 		return b, len
-	end or function(r)
+	end or function(raw)
 		local string__descriptor = Binary_Descriptors.string
-		local b_Family, Family_size = string__descriptor(r.Family)
+		local b_Family, Family_size = string__descriptor(raw.Family)
 		local b_CachedFaceId, CachedFaceId_size = string__descriptor("")
 		local len = 3 + Family_size + CachedFaceId_size
 		local b = buffer.create(len)
-		local FontString = tostring(r)
+		local FontString = tostring(raw)
 		local EmptyWeight = string_find(FontString, "Weight = ,")
 		local EmptyStyle = string_find(FontString, "Style =  }")
-		buffer.writeu16(b, 0, EmptyWeight and 0 or r.Weight.Value)
-		buffer.writeu8(b, 2, EmptyStyle and 0 or r.Style.Value)
+		buffer.writeu16(b, 0, EmptyWeight and 0 or raw.Weight.Value)
+		buffer.writeu8(b, 2, EmptyStyle and 0 or raw.Style.Value)
 		buffer.copy(b, 3, b_Family)
 		buffer.copy(b, 3 + Family_size, b_CachedFaceId)
 		return b, len
@@ -514,7 +524,6 @@ local ESCAPES = {
 	["'"] = "&#39;",
 	["\0"] = "",
 }
-
 for rangeStart, rangeEnd in string.gmatch(ESCAPES_PATTERN, "(.)%-(.)") do
 	for charCode = string.byte(rangeStart), string.byte(rangeEnd) do
 		ESCAPES[string.char(charCode)] = "&#" .. charCode .. ";"
@@ -523,37 +532,39 @@ end
 
 local XML_Descriptors
 XML_Descriptors = {
-	__CDATA = function(r)
-		return "<![CDATA[" .. r .. "]]>"
+	__CDATA = function(raw)
+		return "<![CDATA[" .. raw .. "]]>"
 	end,
-	__ENUM = function(r)
-		return r.Value, "token"
+	__ENUM = function(raw)
+		return raw.Value, "token"
 	end,
-	__NORMALIZE_NUMBER = function(r)
-		if r ~= r then
+	__NORMALIZE_NUMBER = function(raw)
+		if raw ~= raw then
 			return "NAN"
-		elseif r == math.huge then
+		elseif raw == math.huge then
 			return "INF"
-		elseif r == -math.huge then
+		elseif raw == -math.huge then
 			return "-INF"
 		end
-		return r
+		return raw
 	end,
-	__NORMALIZE_RANGE = function(r)
-		return r ~= r and "0" or r
+	__NORMALIZE_RANGE = function(raw)
+		return raw ~= raw and "0" or raw
 	end,
-	__MINMAX = function(min, max, d)
-		return "<min>" .. d(min) .. "</min><max>" .. d(max) .. "</max>"
+	__MINMAX = function(min, max, descriptor)
+		return "<min>" .. descriptor(min) .. "</min><max>" .. descriptor(max) .. "</max>"
 	end,
-	__PROTECTEDSTRING = function(r)
-		return string_find(r, "]]>") and string.gsub(r, ESCAPES_PATTERN, ESCAPES) or XML_Descriptors.__CDATA(r)
+	__PROTECTEDSTRING = function(raw)
+		return string_find(raw, "]]>") and string.gsub(raw, ESCAPES_PATTERN, ESCAPES) or XML_Descriptors.__CDATA(raw)
 	end,
-	__SEQUENCE = function(r, vf)
+	__SEQUENCE = function(raw, valueFormatter)
 		local __NORMALIZE_RANGE = XML_Descriptors.__NORMALIZE_RANGE
 		local sequence = ""
-		for _, kp in r.Keypoints do
-			local Value = kp.Value
-			sequence ..= kp.Time .. " " .. (vf and vf(Value) or __NORMALIZE_RANGE(Value) .. " " .. __NORMALIZE_RANGE(kp.Envelope) .. " ")
+		for _, keypoint in raw.Keypoints do
+			local Value = keypoint.Value
+			sequence ..= keypoint.Time .. " " .. (valueFormatter and valueFormatter(Value) or __NORMALIZE_RANGE(Value) .. " " .. __NORMALIZE_RANGE(
+				keypoint.Envelope
+			) .. " ")
 		end
 		return sequence
 	end,
@@ -564,20 +575,17 @@ XML_Descriptors = {
 		end
 		return Value
 	end,
-	--------------------------------------------------------------
-	--------------------------------------------------------------
-	--------------------------------------------------------------
-	Axes = function(r)
-		return "<axes>" .. __BIT(r.X, r.Y, r.Z) .. "</axes>"
+	Axes = function(raw)
+		return "<axes>" .. __BIT(raw.X, raw.Y, raw.Z) .. "</axes>"
 	end,
-	BinaryString = function(r)
-		return r == "" and "" or base64encode(r)
+	BinaryString = function(raw)
+		return raw == "" and "" or base64encode(raw)
 	end,
-	BrickColor = function(r)
-		return r.Number
+	BrickColor = function(raw)
+		return raw.Number
 	end,
-	CFrame = function(r)
-		local X, Y, Z, R00, R01, R02, R10, R11, R12, R20, R21, R22 = r:GetComponents()
+	CFrame = function(raw)
+		local X, Y, Z, R00, R01, R02, R10, R11, R12, R20, R21, R22 = raw:GetComponents()
 		return XML_Descriptors.__VECTOR(X, Y, Z)
 			.. "<R00>"
 			.. R00
@@ -600,132 +608,139 @@ XML_Descriptors = {
 			.. "</R22>",
 			"CoordinateFrame"
 	end,
-	Color3 = function(r)
-		return "<R>" .. r.R .. "</R><G>" .. r.G .. "</G><B>" .. r.B .. "</B>"
+	Color3 = function(raw)
+		return "<R>" .. raw.R .. "</R><G>" .. raw.G .. "</G><B>" .. raw.B .. "</B>"
 	end,
-	Color3uint8 = function(r)
-		return 0xFF000000 + (math.floor(r.R * 255) * 0x10000) + (math.floor(r.G * 255) * 0x100) + math.floor(r.B * 255)
+	Color3uint8 = function(raw)
+		return 0xFF000000
+			+ (math.floor(raw.R * 255) * 0x10000)
+			+ (math.floor(raw.G * 255) * 0x100)
+			+ math.floor(raw.B * 255)
 	end,
-	ColorSequence = function(r)
-		return XML_Descriptors.__SEQUENCE(r, function(c3)
+	ColorSequence = function(raw)
+		return XML_Descriptors.__SEQUENCE(raw, function(color3)
 			local __NORMALIZE_RANGE = XML_Descriptors.__NORMALIZE_RANGE
-			return __NORMALIZE_RANGE(c3.R)
+			return __NORMALIZE_RANGE(color3.R)
 				.. " "
-				.. __NORMALIZE_RANGE(c3.G)
+				.. __NORMALIZE_RANGE(color3.G)
 				.. " "
-				.. __NORMALIZE_RANGE(c3.B)
+				.. __NORMALIZE_RANGE(color3.B)
 				.. " 0 "
 		end)
 	end,
-	Content = function(r)
-		local SourceType = r.SourceType
+	Content = function(raw)
+		local SourceType = raw.SourceType
 		return SourceType == Enum.ContentSourceType.None and "<null></null>"
-			or SourceType == Enum.ContentSourceType.Uri and "<uri>" .. XML_Descriptors.string(r.Uri) .. "</uri>"
-			or SourceType == Enum.ContentSourceType.Object and "<Ref>" .. GetRef(r.Object) .. "</Ref>"
+			or SourceType == Enum.ContentSourceType.Uri and "<uri>" .. XML_Descriptors.string(raw.Uri) .. "</uri>"
+			or SourceType == Enum.ContentSourceType.Object and "<Ref>" .. GetRef(raw.Object)
+			.. "</Ref>"
 	end,
-	ContentId = function(r)
-		return r == "" and "<null></null>" or "<url>" .. XML_Descriptors.string(r) .. "</url>", "Content"
+	ContentId = function(raw)
+		return raw == "" and "<null></null>" or "<url>" .. XML_Descriptors.string(raw) .. "</url>", "Content"
 	end,
-	CoordinateFrame = function(r)
-		return "<CFrame>" .. XML_Descriptors.CFrame(r) .. "</CFrame>"
+	CoordinateFrame = function(raw)
+		return "<CFrame>" .. XML_Descriptors.CFrame(raw) .. "</CFrame>"
 	end,
-	Faces = function(r)
-		return "<faces>" .. __BIT(r.Right, r.Top, r.Back, r.Left, r.Bottom, r.Front) .. "</faces>"
+	Faces = function(raw)
+		return "<faces>" .. __BIT(raw.Right, raw.Top, raw.Back, raw.Left, raw.Bottom, raw.Front) .. "</faces>"
 	end,
-	Font = 636 < CLIENT_VERSION and function(r)
-		local ok_w, weight = pcall(index, r, "Weight")
-		local ok_s, style = pcall(index, r, "Style")
-		return "<Family>"
-			.. XML_Descriptors.ContentId(r.Family)
-			.. "</Family><Weight>"
-			.. (ok_w and XML_Descriptors.__ENUM(weight) or "")
-			.. "</Weight><Style>"
-			.. (ok_s and style.Name or "")
-			.. "</Style>"
-	end or function(r)
-		local FontString = tostring(r)
-		local EmptyWeight = string_find(FontString, "Weight = ,")
-		local EmptyStyle = string_find(FontString, "Style =  }")
-		return "<Family>"
-			.. XML_Descriptors.ContentId(r.Family)
-			.. "</Family><Weight>"
-			.. (EmptyWeight and "" or XML_Descriptors.__ENUM(r.Weight))
-			.. "</Weight><Style>"
-			.. (EmptyStyle and "" or r.Style.Name)
-			.. "</Style>"
-	end,
-	NumberRange = function(r)
+	Font = 636 < CLIENT_VERSION
+			and function(raw)
+				local ok_w, weight = pcall(index, raw, "Weight")
+				local ok_s, style = pcall(index, raw, "Style")
+				return "<Family>"
+					.. XML_Descriptors.ContentId(raw.Family)
+					.. "</Family><Weight>"
+					.. (ok_w and XML_Descriptors.__ENUM(weight) or "")
+					.. "</Weight><Style>"
+					.. (ok_s and style.Name or "")
+					.. "</Style>"
+			end
+		or function(raw)
+			local FontString = tostring(raw)
+			local EmptyWeight = string_find(FontString, "Weight = ,")
+			local EmptyStyle = string_find(FontString, "Style =  }")
+			return "<Family>"
+				.. XML_Descriptors.ContentId(raw.Family)
+				.. "</Family><Weight>"
+				.. (EmptyWeight and "" or XML_Descriptors.__ENUM(raw.Weight))
+				.. "</Weight><Style>"
+				.. (EmptyStyle and "" or raw.Style.Name)
+				.. "</Style>"
+		end,
+	NumberRange = function(raw)
 		local __NORMALIZE_RANGE = XML_Descriptors.__NORMALIZE_RANGE
-		return __NORMALIZE_RANGE(r.Min) .. " " .. __NORMALIZE_RANGE(r.Max)
+		return __NORMALIZE_RANGE(raw.Min) .. " " .. __NORMALIZE_RANGE(raw.Max)
 	end,
 	NumberSequence = nil,
-	PhysicalProperties = function(r)
-		local CustomPhysics = "<CustomPhysics>" .. XML_Descriptors.bool(r and true or false) .. "</CustomPhysics>"
-		return r
-				and CustomPhysics
-					.. "<Density>"
-					.. r.Density
-					.. "</Density><Friction>"
-					.. r.Friction
-					.. "</Friction><Elasticity>"
-					.. r.Elasticity
-					.. "</Elasticity><FrictionWeight>"
-					.. r.FrictionWeight
-					.. "</FrictionWeight><ElasticityWeight>"
-					.. r.ElasticityWeight
-					.. "</ElasticityWeight>"
+	PhysicalProperties = function(raw)
+		local CustomPhysics = "<CustomPhysics>" .. XML_Descriptors.bool(raw and true or false) .. "</CustomPhysics>"
+		return raw
+				and CustomPhysics .. "<Density>" .. raw.Density .. "</Density><Friction>" .. raw.Friction .. "</Friction><Elasticity>" .. raw.Elasticity .. "</Elasticity><FrictionWeight>" .. raw.FrictionWeight .. "</FrictionWeight><ElasticityWeight>" .. raw.ElasticityWeight .. "</ElasticityWeight>"
 			or CustomPhysics
 	end,
-	Ray = function(r)
+	Ray = function(raw)
 		local vector3 = XML_Descriptors.Vector3
-		return "<origin>" .. vector3(r.Origin) .. "</origin><direction>" .. vector3(r.Direction) .. "</direction>"
+		return "<origin>" .. vector3(raw.Origin) .. "</origin><direction>" .. vector3(raw.Direction) .. "</direction>"
 	end,
-	Rect = function(r)
-		return XML_Descriptors.__MINMAX(r.Min, r.Max, XML_Descriptors.Vector2), "Rect2D"
+	Rect = function(raw)
+		return XML_Descriptors.__MINMAX(raw.Min, raw.Max, XML_Descriptors.Vector2), "Rect2D"
 	end,
-	Region3 = function(r)
-		local Translation = r.CFrame.Position
-		local HalfSize = r.Size * 0.5
-		return XML_Descriptors.__MINMAX(Translation - HalfSize, Translation + HalfSize, XML_Descriptors.Vector3)
+	Region3 = function(raw)
+		local Translation = raw.CFrame.Position
+		local HalfSize = raw.Size * 0.5
+		return XML_Descriptors.__MINMAX(
+			Translation - HalfSize,
+			Translation + HalfSize,
+			XML_Descriptors.Vector3
+		)
 	end,
-	Region3int16 = function(r)
-		return XML_Descriptors.__MINMAX(r.Min, r.Max, XML_Descriptors.Vector3int16)
+	Region3int16 = function(raw)
+		return XML_Descriptors.__MINMAX(raw.Min, raw.Max, XML_Descriptors.Vector3int16)
 	end,
-	SharedString = function(r)
-		r = r == "" and "" or base64encode(r)
-		local Identifier = SharedString_identifiers[r]
+	SharedString = function(raw)
+		raw = raw == "" and "" or base64encode(raw)
+		local Identifier = SharedString_identifiers[raw]
 		if SharedStrings[Identifier] == nil then
-			SharedStrings[Identifier] = r
+			SharedStrings[Identifier] = raw
 		end
 		return Identifier
 	end,
 	SecurityCapabilities = nil,
-	UDim = function(r)
-		return "<S>" .. r.Scale .. "</S><O>" .. r.Offset .. "</O>"
+	UDim = function(raw)
+		return "<S>" .. raw.Scale .. "</S><O>" .. raw.Offset .. "</O>"
 	end,
-	UDim2 = function(r)
-		local X, Y = r.X, r.Y
-		return "<XS>" .. X.Scale .. "</XS><XO>" .. X.Offset .. "</XO><YS>" .. Y.Scale .. "</YS><YO>" .. Y.Offset .. "</YO>"
+	UDim2 = function(raw)
+		local X, Y = raw.X, raw.Y
+		return "<XS>"
+			.. X.Scale
+			.. "</XS><XO>"
+			.. X.Offset
+			.. "</XO><YS>"
+			.. Y.Scale
+			.. "</YS><YO>"
+			.. Y.Offset
+			.. "</YO>"
 	end,
-	Vector2 = function(r)
-		return XML_Descriptors.__VECTOR(r.X, r.Y)
+	Vector2 = function(raw)
+		return XML_Descriptors.__VECTOR(raw.X, raw.Y)
 	end,
 	Vector2int16 = nil,
-	Vector3 = function(r)
-		return XML_Descriptors.__VECTOR(r.X, r.Y, r.Z)
+	Vector3 = function(raw)
+		return XML_Descriptors.__VECTOR(raw.X, raw.Y, raw.Z)
 	end,
 	Vector3int16 = nil,
-	bool = function(r)
-		return r and "true" or "false"
+	bool = function(raw)
+		return raw and "true" or "false"
 	end,
 	double = nil,
 	float = nil,
 	int = nil,
 	int64 = nil,
-	string = function(r)
-		return (r == nil or r == "") and ""
-			or string_find(r, "]]>") and string.gsub(r, ESCAPES_PATTERN, ESCAPES)
-			or XML_Descriptors.__CDATA(string.gsub(r, "\0", ""))
+	string = function(raw)
+		return (raw == nil or raw == "") and ""
+			or string_find(raw, "]]>") and string.gsub(raw, ESCAPES_PATTERN, ESCAPES)
+			or XML_Descriptors.__CDATA(string.gsub(raw, "\0", ""))
 	end,
 }
 
@@ -770,12 +785,12 @@ do
 			PluginOrOpenCloud = 2 ^ 61,
 			Assistant = 2 ^ 62,
 		}
-		XML_Descriptors.SecurityCapabilities = function(r)
-			if r == BASE_CAPABILITIES then
+		XML_Descriptors.SecurityCapabilities = function(raw)
+			if raw == BASE_CAPABILITIES then
 				return 0
 			end
 			local result = 0
-			for _, flag in string.split(tostring(r), " | ") do
+			for _, flag in string.split(tostring(raw), " | ") do
 				local bit = CAPABILITY_BITS[flag]
 				if bit then
 					result += bit
@@ -786,16 +801,18 @@ do
 	end
 end
 
-for dn, rn in {
-	NumberSequence = "__SEQUENCE",
-	Vector2int16 = "Vector2",
-	Vector3int16 = "Vector3",
-	double = "__NORMALIZE_NUMBER",
-	float = "__NORMALIZE_NUMBER",
-	int = "__NORMALIZE_NUMBER",
-	int64 = "__NORMALIZE_NUMBER",
-} do
-	XML_Descriptors[dn] = XML_Descriptors[rn]
+for name, redirect in
+	{
+		NumberSequence = "__SEQUENCE",
+		Vector2int16 = "Vector2",
+		Vector3int16 = "Vector3",
+		double = "__NORMALIZE_NUMBER",
+		float = "__NORMALIZE_NUMBER",
+		int = "__NORMALIZE_NUMBER",
+		int64 = "__NORMALIZE_NUMBER",
+	}
+do
+	XML_Descriptors[name] = XML_Descriptors[redirect]
 end
 if CLIENT_VERSION < math.huge then
 	XML_Descriptors.Content = XML_Descriptors.ContentId
@@ -813,8 +830,8 @@ do
 	}
 	local NotScriptableFixes = {
 		Instance = {
-			AttributesSerialize = function(i)
-				local attrs = i:GetAttributes()
+			AttributesSerialize = function(instance)
+				local attrs = instance:GetAttributes()
 				if not next(attrs) then
 					return ""
 				end
@@ -850,8 +867,8 @@ do
 				return buffer.tostring(b)
 			end,
 			DefinesCapabilities = "Sandboxed",
-			Tags = function(i)
-				local tags = i:GetTags()
+			Tags = function(instance)
+				local tags = instance:GetTags()
 				if #tags == 0 then
 					return ""
 				end
@@ -868,35 +885,36 @@ do
 		IntConstrainedValue = { value = "Value" },
 		Terrain = {
 			AcquisitionMethod = "LastUsedModificationMethod",
-			MaterialColors = function(i)
-				local TERRAIN_MATERIAL_COLORS = {
-					Enum.Material.Grass,
-					Enum.Material.Slate,
-					Enum.Material.Concrete,
-					Enum.Material.Brick,
-					Enum.Material.Sand,
-					Enum.Material.WoodPlanks,
-					Enum.Material.Rock,
-					Enum.Material.Glacier,
-					Enum.Material.Snow,
-					Enum.Material.Sandstone,
-					Enum.Material.Mud,
-					Enum.Material.Basalt,
-					Enum.Material.Ground,
-					Enum.Material.CrackedLava,
-					Enum.Material.Asphalt,
-					Enum.Material.Cobblestone,
-					Enum.Material.Ice,
-					Enum.Material.LeafyGrass,
-					Enum.Material.Salt,
-					Enum.Material.Limestone,
-					Enum.Material.Pavement,
-				}
+			MaterialColors = function(instance)
+				local TERRAIN_MATERIAL_COLORS =
+					{
+						Enum.Material.Grass,
+						Enum.Material.Slate,
+						Enum.Material.Concrete,
+						Enum.Material.Brick,
+						Enum.Material.Sand,
+						Enum.Material.WoodPlanks,
+						Enum.Material.Rock,
+						Enum.Material.Glacier,
+						Enum.Material.Snow,
+						Enum.Material.Sandstone,
+						Enum.Material.Mud,
+						Enum.Material.Basalt,
+						Enum.Material.Ground,
+						Enum.Material.CrackedLava,
+						Enum.Material.Asphalt,
+						Enum.Material.Cobblestone,
+						Enum.Material.Ice,
+						Enum.Material.LeafyGrass,
+						Enum.Material.Salt,
+						Enum.Material.Limestone,
+						Enum.Material.Pavement,
+					}
 				local b = buffer.create(69)
 				local offset = 6
 				local RGB_components = { "R", "G", "B" }
 				for _, material in TERRAIN_MATERIAL_COLORS do
-					local color = i:GetMaterialColor(material)
+					local color = instance:GetMaterialColor(material)
 					for _, component in RGB_components do
 						buffer.writeu8(b, offset, math.floor(color[component] * 255))
 						offset += 1
@@ -918,30 +936,30 @@ do
 		Fire = { heat_xml = "Heat", size_xml = "Size" },
 		Humanoid = { Health_XML = "Health" },
 		HumanoidDescription = {
-			EmotesDataInternal = function(i)
+			EmotesDataInternal = function(instance)
 				local emotes_data = ""
-				for name, ids in i:GetEmotes() do
+				for name, ids in instance:GetEmotes() do
 					emotes_data ..= name .. "^" .. table.concat(ids, "^") .. "^\\"
 				end
 				return emotes_data
 			end,
-			EquippedEmotesDataInternal = function(i)
+			EquippedEmotesDataInternal = function(instance)
 				local equipped_emotes_data = ""
-				for _, emote in i:GetEquippedEmotes() do
+				for _, emote in instance:GetEquippedEmotes() do
 					equipped_emotes_data ..= emote.Slot .. "^" .. emote.Name .. "\\"
 				end
 				return equipped_emotes_data
 			end,
 		},
 		LocalizationTable = {
-			Contents = function(i)
-				return i:GetContents()
+			Contents = function(instance)
+				return instance:GetContents()
 			end,
 		},
 		MaterialService = { Use2022MaterialsXml = "Use2022Materials" },
 		Model = {
-			ScaleFactor = function(i)
-				return i:GetScale()
+			ScaleFactor = function(instance)
+				return instance:GetScale()
 			end,
 			WorldPivotData = "WorldPivot",
 		},
@@ -998,8 +1016,13 @@ do
 				return
 			end
 			local CLIENT_VERSION_str = tostring(CLIENT_VERSION)
-			local ok, result = pcall(readfile, CLIENT_VERSION_str)
-			if ok and result and result ~= "" and pcall(service.HttpService.JSONDecode, service.HttpService, result) then
+			local p, result = pcall(readfile, CLIENT_VERSION_str)
+			if
+				p
+				and result
+				and result ~= ""
+				and pcall(service.HttpService.JSONDecode, service.HttpService, result)
+			then
 				API_Dump = result
 				return
 			end
@@ -1021,11 +1044,16 @@ do
 				end
 			end
 			for version_hash in matching_versions do
-				ok, result = pcall(game.HttpGet, game, "https://setup.rbxcdn.com/" .. version_hash .. "-Full-API-Dump.json", true)
-				if ok then
-					local o, r = pcall(service.HttpService.JSONDecode, service.HttpService, result)
-					if o then
-						API_Dump = service.HttpService:JSONEncode(r.Classes)
+				p, result = pcall(
+					game.HttpGet,
+					game,
+					"https://setup.rbxcdn.com/" .. version_hash .. "-Full-API-Dump.json",
+					true
+				)
+				if p then
+					local p2, r2 = pcall(service.HttpService.JSONDecode, service.HttpService, result)
+					if p2 then
+						API_Dump = service.HttpService:JSONEncode(r2.Classes)
 						break
 					end
 				end
@@ -1064,8 +1092,10 @@ do
 					local Serialization = Member.Serialization
 					if Serialization.CanLoad then
 						local PropertyName = Member.Name
-						if (Serialization.CanSave or ClassWhitelist and ClassWhitelist[PropertyName])
-							and not (ClassBlacklist and ClassBlacklist[PropertyName]) then
+						if
+							(Serialization.CanSave or ClassWhitelist and ClassWhitelist[PropertyName])
+							and not (ClassBlacklist and ClassBlacklist[PropertyName])
+						then
 							local MemberTags = Member.Tags
 							local ValueType = Member.ValueType
 							local ValueType_Name = ValueType.Name
@@ -1102,20 +1132,20 @@ do
 								local NotScriptableFix = NotScriptableFixClass[PropertyName]
 								if NotScriptableFix then
 									Property.Fallback = type(NotScriptableFix) == "function" and NotScriptableFix
-										or PreferredDescriptorName and function(i)
-											local o, r = pcall(index, i, PreferredDescriptorName)
-											if o then
+										or PreferredDescriptorName and function(instance)
+											local p, r = pcall(index, instance, PreferredDescriptorName)
+											if p then
 												return r
 											end
-											return i[NotScriptableFix]
+											return instance[NotScriptableFix]
 										end
-										or function(i)
-											return i[NotScriptableFix]
+										or function(instance)
+											return instance[NotScriptableFix]
 										end
 								end
 							elseif PreferredDescriptorName then
-								Property.Fallback = function(i)
-									return i[PreferredDescriptorName]
+								Property.Fallback = function(instance)
+									return instance[PreferredDescriptorName]
 								end
 							end
 							ClassProperties[ClassProperties_size] = Property
@@ -1128,8 +1158,8 @@ do
 		end
 		return classList
 	end
-	local ok, result = pcall(FetchAPI)
-	if ok then
+	local p, result = pcall(FetchAPI)
+	if p then
 		ClassList = result
 	else
 		warn("Failed to load the API Dump")
@@ -1140,7 +1170,7 @@ end
 
 local GLOBAL_ENV = getgenv and getgenv() or _G or shared
 
-local function synsaveinstance(opts, opts2)
+local function synsaveinstance(CustomOptions, CustomOptions2)
 	if GLOBAL_ENV.USSI then
 		return
 	end
@@ -1238,81 +1268,86 @@ local function synsaveinstance(opts, opts2)
 		end
 	end
 	do
-		local function construct_NilinstanceFix(n, cn, s)
-			return function(i, ipo)
+		local function construct_NilinstanceFix(Name, ClassName, Separate)
+			return function(instance, instancePropertyOverrides)
 				local Exists
-				if not s then
-					Exists = OPTIONS.NilInstancesFixes[n]
+				if not Separate then
+					Exists = OPTIONS.NilInstancesFixes[Name]
 				end
 				local Fix
 				local DoesntExist = not Exists
 				if DoesntExist then
-					Fix = Instance.new(cn)
-					if not s then
-						OPTIONS.NilInstancesFixes[n] = Fix
+					Fix = Instance.new(ClassName)
+					if not Separate then
+						OPTIONS.NilInstancesFixes[Name] = Fix
 					end
-					ipo[Fix] = { __SaveSpecific = true, __Children = { i }, Properties = { Name = n } }
+					instancePropertyOverrides[Fix] =
+						{ __SaveSpecific = true, __Children = { instance }, Properties = { Name = Name } }
 				else
 					Fix = Exists
-					table.insert(ipo[Fix].__Children, i)
+					table.insert(instancePropertyOverrides[Fix].__Children, instance)
 				end
 				if DoesntExist then
 					return Fix
 				end
 			end
 		end
-		OPTIONS.NilInstancesFixes.Animator =
-			construct_NilinstanceFix("Animator has to be placed under Humanoid or AnimationController", "AnimationController")
+		OPTIONS.NilInstancesFixes.Animator = construct_NilinstanceFix(
+			"Animator has to be placed under Humanoid or AnimationController",
+			"AnimationController"
+		)
 		OPTIONS.NilInstancesFixes.AdPortal = construct_NilinstanceFix("AdPortal must be parented to a Part", "Part")
 		OPTIONS.NilInstancesFixes.Attachment =
 			construct_NilinstanceFix("Attachments must be parented to a BasePart or another Attachment", "Part")
-		OPTIONS.NilInstancesFixes.BaseWrap = construct_NilinstanceFix("BaseWrap must be parented to a MeshPart", "MeshPart")
-		OPTIONS.NilInstancesFixes.PackageLink = construct_NilinstanceFix("Package already has a PackageLink", "Folder", true)
-		if opts2 and type(opts2) == "table" then
-			local tmp = opts
+		OPTIONS.NilInstancesFixes.BaseWrap =
+			construct_NilinstanceFix("BaseWrap must be parented to a MeshPart", "MeshPart")
+		OPTIONS.NilInstancesFixes.PackageLink =
+			construct_NilinstanceFix("Package already has a PackageLink", "Folder", true)
+		if CustomOptions2 and type(CustomOptions2) == "table" then
+			local tmp = CustomOptions
 			local Type = typeof(tmp)
-			opts = opts2
+			CustomOptions = CustomOptions2
 			if Type == "Instance" then
-				opts.Object = tmp
+				CustomOptions.Object = tmp
 			elseif Type == "table" and typeof(tmp[1]) == "Instance" then
-				opts.ExtraInstances = tmp
+				CustomOptions.ExtraInstances = tmp
 				OPTIONS.IsModel = true
 			end
 		end
-		local Type = typeof(opts)
+		local Type = typeof(CustomOptions)
 		if Type == "table" then
-			if typeof(opts[1]) == "Instance" then
+			if typeof(CustomOptions[1]) == "Instance" then
 				OPTIONS.mode = "invalidmode"
-				OPTIONS.ExtraInstances = opts
+				OPTIONS.ExtraInstances = CustomOptions
 				OPTIONS.IsModel = true
-				opts = {}
+				CustomOptions = {}
 			else
-				for k, v in opts do
-					local option = OPTIONS_lowercase[string.lower(k)]
+				for key, value in CustomOptions do
+					local option = OPTIONS_lowercase[string.lower(key)]
 					if option then
-						OPTIONS[option] = v
+						OPTIONS[option] = value
 						CustomOptions_valid[option] = true
 					end
 				end
-				local Decompile = opts.Decompile
+				local Decompile = CustomOptions.Decompile
 				if Decompile ~= nil then
 					OPTIONS.noscripts = not Decompile
 				end
-				local SavePlayerCharacters = opts.SavePlayerCharacters
+				local SavePlayerCharacters = CustomOptions.SavePlayerCharacters
 				if SavePlayerCharacters ~= nil then
 					OPTIONS.RemovePlayerCharacters = not SavePlayerCharacters
 				end
-				local RemovePlayers = opts.RemovePlayers
+				local RemovePlayers = CustomOptions.RemovePlayers
 				if RemovePlayers ~= nil then
 					OPTIONS.IsolatePlayers = not RemovePlayers
 				end
 			end
 		elseif Type == "Instance" then
 			OPTIONS.mode = "invalidmode"
-			OPTIONS.Object = opts
-			opts = {}
+			OPTIONS.Object = CustomOptions
+			CustomOptions = {}
 		else
-			opts = {}
+			CustomOptions = {}
 		end
 	end
 	if OPTIONS.IgnoreDefaultPlayerScripts then
@@ -1344,7 +1379,7 @@ local function synsaveinstance(opts, opts2)
 	local SaveCacheInterval = OPTIONS.SaveCacheInterval
 	local ToSaveInstance = OPTIONS.Object
 	local IsModel = OPTIONS.IsModel
-	if ToSaveInstance and opts.IsModel == nil then
+	if ToSaveInstance and CustomOptions.IsModel == nil then
 		IsModel = true
 	end
 	local IgnoreDefaultProperties = OPTIONS.IgnoreDefaultProperties
@@ -1366,13 +1401,7 @@ local function synsaveinstance(opts, opts2)
 	local IgnoreSharedStrings = OPTIONS.IgnoreSharedStrings
 	local SharedStringOverwrite = OPTIONS.SharedStringOverwrite
 	local ldeccache = GLOBAL_ENV.scriptcache
-	local DecompileIgnoring,
-		ToSaveList,
-		ldecompile,
-		placename,
-		elapse_t,
-		SaveNotCreatableWillBeEnabled,
-		RecoveredScripts
+	local DecompileIgnoring, ToSaveList, ldecompile, placename, elapse_t, SaveNotCreatableWillBeEnabled, RecoveredScripts
 	if OPTIONS.ReadMe then
 		RecoveredScripts = {}
 	end
@@ -1385,8 +1414,8 @@ local function synsaveinstance(opts, opts2)
 		ToSaveInstance = nil
 		IsModel = nil
 	end
-	local function isLuaSourceContainer(i)
-		return i:IsA("LuaSourceContainer")
+	local function isLuaSourceContainer(instance)
+		return instance:IsA("LuaSourceContainer")
 	end
 	do
 		local mode = string.lower(OPTIONS.mode)
@@ -1395,28 +1424,32 @@ local function synsaveinstance(opts, opts2)
 		pcall(function()
 			PlaceName ..= " " .. service.MarketplaceService:GetProductInfo(PlaceName).Name
 		end)
-		local function sanitizeFileName(s)
-			return string.sub(string.gsub(string.gsub(string.gsub(s, "[^%w _]", ""), " +", " "), " +$", ""), 1, 240)
+		local function sanitizeFileName(str)
+			return string.sub(string.gsub(string.gsub(string.gsub(str, "[^%w _]", ""), " +", " "), " +$", ""), 1, 240)
 		end
 		if ToSaveInstance then
 			if mode == "optimized" then
 				mode = "full"
 			end
-			for _, k in {
-				"IsolateLocalPlayer",
-				"IsolateLocalPlayerCharacter",
-				"IsolatePlayers",
-				"IsolateStarterPlayer",
-				"NilInstances",
-			} do
-				if CustomOptions_valid[k] == nil then
-					OPTIONS[k] = false
+			for _, key in
+				{
+					"IsolateLocalPlayer",
+					"IsolateLocalPlayerCharacter",
+					"IsolatePlayers",
+					"IsolateStarterPlayer",
+					"NilInstances",
+				}
+			do
+				if CustomOptions_valid[key] == nil then
+					OPTIONS[key] = false
 				end
 			end
 		end
 		if IsModel then
-			placename =
-				(FilePath or sanitizeFileName("model " .. PlaceName .. " " .. (ToSaveInstance or tmp[1] or game):GetFullName())) .. ".rbxmx"
+			placename = (
+				FilePath
+				or sanitizeFileName("model " .. PlaceName .. " " .. (ToSaveInstance or tmp[1] or game):GetFullName())
+			) .. ".rbxmx"
 		else
 			placename = (FilePath or sanitizeFileName("place " .. PlaceName)) .. ".rbxlx"
 		end
@@ -1443,25 +1476,27 @@ local function synsaveinstance(opts, opts2)
 			end
 		elseif mode == "optimized" then
 			local tmp_dict = ArrayToDict(tmp)
-			for _, serviceName in {
-				"Workspace",
-				"Players",
-				"Lighting",
-				"MaterialService",
-				"ReplicatedFirst",
-				"ReplicatedStorage",
-				"ServerScriptService",
-				"ServerStorage",
-				"StarterGui",
-				"StarterPack",
-				"StarterPlayer",
-				"Teams",
-				"SoundService",
-				"Chat",
-				"TextChatService",
-				"LocalizationService",
-				"JointsService",
-			} do
+			for _, serviceName in
+				{
+					"Workspace",
+					"Players",
+					"Lighting",
+					"MaterialService",
+					"ReplicatedFirst",
+					"ReplicatedStorage",
+					"ServerScriptService",
+					"ServerStorage",
+					"StarterGui",
+					"StarterPack",
+					"StarterPlayer",
+					"Teams",
+					"SoundService",
+					"Chat",
+					"TextChatService",
+					"LocalizationService",
+					"JointsService",
+				}
+			do
 				local _service = game:FindService(serviceName)
 				if _service and not tmp_dict[_service] then
 					table.insert(tmp, _service)
@@ -1469,20 +1504,20 @@ local function synsaveinstance(opts, opts2)
 			end
 		elseif mode == "scripts" then
 			local unique = {}
-			for _, i in TempRoot:GetDescendants() do
-				if isLuaSourceContainer(i) then
-					local Parent = i.Parent
+			for _, instance in TempRoot:GetDescendants() do
+				if isLuaSourceContainer(instance) then
+					local Parent = instance.Parent
 					while Parent and Parent ~= TempRoot do
-						i = i.Parent
-						Parent = i.Parent
+						instance = instance.Parent
+						Parent = instance.Parent
 					end
 					if Parent then
-						unique[i] = true
+						unique[instance] = true
 					end
 				end
 			end
-			for i in unique do
-				table.insert(tmp, i)
+			for instance in unique do
+				table.insert(tmp, instance)
 			end
 		end
 		ToSaveList = tmp
@@ -1500,13 +1535,15 @@ local function synsaveinstance(opts, opts2)
 	end
 	local function get_size_format()
 		local Size
-		for i, unit in {
-			"B",
-			"KB",
-			"MB",
-			"GB",
-			"TB",
-		} do
+		for i, unit in
+			{
+				"B",
+				"KB",
+				"MB",
+				"GB",
+				"TB",
+			}
+		do
 			if totalsize < 0x400 ^ i then
 				Size = math.floor(totalsize / (0x400 ^ (i - 1)) * 10) / 10 .. " " .. unit
 				break
@@ -1519,15 +1556,15 @@ local function synsaveinstance(opts, opts2)
 		RunService.RenderStepped:Wait()
 	end
 	local Loading
-	local function run_with_loading(txt, ks, wr, task_fn, ...)
+	local function run_with_loading(text, keepStatus, waitForRender, taskFunction, ...)
 		local previousStatus
 		if StatusText then
-			if ks then
+			if keepStatus then
 				previousStatus = StatusText.Text
 			end
 			Loading = task.spawn(function()
 				local spinner_count = 0
-				local chars = { "|", "/", "—", "\\" }
+				local chars = { "|", "/", "��", "\\" }
 				local chars_size = #chars
 				local function getLoadingText()
 					spinner_count += 1
@@ -1536,17 +1573,17 @@ local function synsaveinstance(opts, opts2)
 					end
 					return chars[spinner_count]
 				end
-				txt ..= " "
+				text ..= " "
 				while true do
-					StatusText.Text = txt .. getLoadingText()
+					StatusText.Text = text .. getLoadingText()
 					task.wait(0.25)
 				end
 			end)
-			if wr then
+			if waitForRender then
 				wait_for_render()
 			end
 		end
-		local result = { task_fn(...) }
+		local result = { taskFunction(...) }
 		if Loading then
 			task.cancel(Loading)
 			Loading = nil
@@ -1556,18 +1593,18 @@ local function synsaveinstance(opts, opts2)
 		end
 		return unpack(result)
 	end
-	local function construct_TimeoutHandler(t, f, tr)
-		return t < 0 and function(s)
-			return pcall(f, s)
-		end or function(s)
+	local function construct_TimeoutHandler(timeout, f, timeout_ret)
+		return timeout < 0 and function(script)
+			return pcall(f, script)
+		end or function(script)
 			local thread = coroutine.running()
 			local timeoutThread, isCancelled
-			timeoutThread = task.delay(t, function()
+			timeoutThread = task.delay(timeout, function()
 				isCancelled = true
-				coroutine.resume(thread, nil, tr)
+				coroutine.resume(thread, nil, timeout_ret)
 			end)
 			task.spawn(function()
-				local ok, result = pcall(f, s)
+				local ok, result = pcall(f, script)
 				if isCancelled then
 					return
 				end
@@ -1586,9 +1623,9 @@ local function synsaveinstance(opts, opts2)
 	end
 	local SaveBytecode
 	if OPTIONS.SaveBytecode and getscriptbytecode then
-		SaveBytecode = function(s)
-			local ok, bytecode = getbytecode(s)
-			if ok and bytecode and bytecode ~= "" then
+		SaveBytecode = function(script)
+			local s, bytecode = getbytecode(script)
+			if s and bytecode and bytecode ~= "" then
 				return "-- Bytecode (Base64):\n-- " .. base64encode(bytecode) .. "\n\n"
 			end
 		end
@@ -1601,12 +1638,12 @@ local function synsaveinstance(opts, opts2)
 			end
 		elseif Decompiler then
 			local decomp = construct_TimeoutHandler(Timeout, Decompiler, "Decompiler timed out")
-			ldecompile = function(s)
+			ldecompile = function(script)
 				local hashed_bytecode
 				if ScriptCache then
-					local ok, bytecode = getbytecode(s)
+					local s, bytecode = getbytecode(script)
 					local cached
-					if ok then
+					if s then
 						if not bytecode or bytecode == "" then
 							return "-- The Script is Empty"
 						end
@@ -1615,7 +1652,7 @@ local function synsaveinstance(opts, opts2)
 					end
 					if cached then
 						if __DEBUG_MODE then
-							__DEBUG_MODE("Found in Cache", s:GetFullName())
+							__DEBUG_MODE("Found in Cache", script:GetFullName())
 						end
 						return cached
 					end
@@ -1625,7 +1662,7 @@ local function synsaveinstance(opts, opts2)
 					end
 					task.wait()
 				end
-				local ok, result = run_with_loading("Decompiling " .. s.Name, true, nil, decomp, s)
+				local ok, result = run_with_loading("Decompiling " .. script.Name, true, nil, decomp, script)
 				if not result then
 					ok, result = false, "Empty Output"
 				end
@@ -1639,7 +1676,7 @@ local function synsaveinstance(opts, opts2)
 				if ScriptCache and hashed_bytecode then
 					ldeccache[hashed_bytecode] = output
 					if __DEBUG_MODE then
-						__DEBUG_MODE("Cached", s:GetFullName())
+						__DEBUG_MODE("Cached", script:GetFullName())
 					end
 				end
 				return output
@@ -1655,119 +1692,120 @@ local function synsaveinstance(opts, opts2)
 			or service.Players:GetPropertyChangedSignal("LocalPlayer"):Wait()
 			or service.Players.LocalPlayer
 	end
-	local function filterLinkedSource(s)
-		local o, r = pcall(service.HttpService.JSONDecode, service.HttpService, s)
-		if o and r.errors then
+	local function filterLinkedSource(str)
+		local p, r = pcall(service.HttpService.JSONDecode, service.HttpService, str)
+		if p and r.errors then
 			return
 		end
 		return true
 	end
-	local function replaceClassName(i, iname, cname)
+	local function replaceClassName(instance, InstanceName, ClassName)
 		local InstanceOverride
-		if iname ~= cname then
-			InstanceOverride = InstancesOverrides[i]
+		if InstanceName ~= ClassName then
+			InstanceOverride = InstancesOverrides[instance]
 			if not InstanceOverride then
-				InstanceOverride = { Properties = { Name = "[" .. cname .. "] " .. iname } }
-				InstancesOverrides[i] = InstanceOverride
+				InstanceOverride = { Properties = { Name = "[" .. ClassName .. "] " .. InstanceName } }
+				InstancesOverrides[instance] = InstanceOverride
 			end
 		end
 		return InstanceOverride
 	end
-	local function filterPropVal(res, pname, cat)
-		return res == nil
-			or res == "can't get value"
-			or type(res) == "string" and (cat == "Enum" or string_find(res, "Unable to get property " .. pname))
+	local function filterPropVal(result, propertyName, category)
+		return result == nil
+			or result == "can't get value"
+			or type(result) == "string"
+				and (category == "Enum" or string_find(result, "Unable to get property " .. propertyName))
 	end
 	local __BREAK = "__BREAK" .. service.HttpService:GenerateGUID(false)
-	local function ReadProperty(i, p, pname, s, cat, opt)
+	local function ReadProperty(instance, property, propertyName, special, category, optional)
 		local raw = __BREAK
-		local InstanceOverride = InstancesOverrides[i]
+		local InstanceOverride = InstancesOverrides[instance]
 		if InstanceOverride then
 			local PropertiesOverride = InstanceOverride.Properties
 			if PropertiesOverride then
-				local PropertyOverride = PropertiesOverride[pname]
+				local PropertyOverride = PropertiesOverride[propertyName]
 				if PropertyOverride ~= nil then
 					return PropertyOverride
 				end
 			end
 		end
-		local CanRead = p.CanRead
+		local CanRead = property.CanRead
 		if CanRead == false then
 			return __BREAK
 		end
-		if s then
+		if special then
 			if gethiddenproperty then
-				local ok, result = pcall(gethiddenproperty, i, pname)
-				if ok then
+				local p, result = pcall(gethiddenproperty, instance, propertyName)
+				if p then
 					raw = result
 				end
-				if filterPropVal(raw, pname, cat) then
-					if result ~= nil or not opt then
+				if filterPropVal(raw, propertyName, category) then
+					if result ~= nil or not optional then
 						if __DEBUG_MODE then
-							__DEBUG_MODE("Filtered", pname)
+							__DEBUG_MODE("Filtered", propertyName)
 						end
-						p.CanRead = false
+						property.CanRead = false
 					end
 					return __BREAK
 				end
 			end
 		else
 			if CanRead then
-				raw = i[pname]
+				raw = instance[propertyName]
 			else
-				local ok, result = pcall(index, i, pname)
-				if ok then
+				local p, result = pcall(index, instance, propertyName)
+				if p then
 					raw = result
 				elseif gethiddenproperty then
-					ok, result = pcall(gethiddenproperty, i, pname)
-					if ok then
+					p, result = pcall(gethiddenproperty, instance, propertyName)
+					if p then
 						raw = result
-						p.Special = true
+						property.Special = true
 					end
 				end
-				p.CanRead = ok
-				if not ok or filterPropVal(raw, pname, cat) then
+				property.CanRead = p
+				if not p or filterPropVal(raw, propertyName, category) then
 					return __BREAK
 				end
 			end
 		end
 		return raw
 	end
-	local function ReturnItem(cname, i)
-		return '<Item class="' .. cname .. '" referent="' .. GetRef(i) .. '"><Properties>'
+	local function ReturnItem(className, instance)
+		return '<Item class="' .. className .. '" referent="' .. GetRef(instance) .. '"><Properties>'
 	end
-	local function ReturnProperty(t, pname, v)
-		return "<" .. t .. ' name="' .. pname .. '">' .. v .. "</" .. t .. ">"
+	local function ReturnProperty(tag, propertyName, value)
+		return "<" .. tag .. ' name="' .. propertyName .. '">' .. value .. "</" .. tag .. ">"
 	end
-	local function ReturnValueAndTag(r, vt, d)
-		local value, tag = (d or XML_Descriptors[vt])(r)
-		return value, tag or vt
+	local function ReturnValueAndTag(raw, valueType, descriptor)
+		local value, tag = (descriptor or XML_Descriptors[valueType])(raw)
+		return value, tag or valueType
 	end
-	local function InheritsFix(fixes, cname, i)
-		local Fix = fixes[cname]
+	local function InheritsFix(fixes, className, instance)
+		local Fix = fixes[className]
 		if Fix then
 			return Fix
 		elseif Fix == nil then
 			for class_name, fix in fixes do
-				if i:IsA(class_name) then
+				if instance:IsA(class_name) then
 					return fix
 				end
 			end
 		end
 	end
-	local function GetInheritedProps(cname)
+	local function GetInheritedProps(className)
 		local prop_list = {}
-		local layer = ClassList[cname]
+		local layer = ClassList[className]
 		while layer do
 			local layer_props = layer.Properties
 			table.move(layer_props, 1, #layer_props, #prop_list + 1, prop_list)
 			layer = ClassList[layer.Superclass]
 		end
-		inherited_properties[cname] = prop_list
+		inherited_properties[className] = prop_list
 		return prop_list
 	end
 	local CHUNK_LIMIT = 200 * 1024 * 1024
-	local function save_cache(f)
+	local function save_cache(final)
 		local savestr = table.concat(savebuffer)
 		currentstr ..= savestr
 		local savestr_len = #savestr
@@ -1775,7 +1813,7 @@ local function synsaveinstance(opts, opts2)
 		currentsize += savestr_len
 		table.clear(savebuffer)
 		savebuffer_size = 1
-		if CHUNK_LIMIT < currentsize or f then
+		if CHUNK_LIMIT < currentsize or final then
 			table.insert(chunks, { size = currentsize, str = currentstr })
 			currentstr, currentsize = "", 0
 		end
@@ -1784,37 +1822,37 @@ local function synsaveinstance(opts, opts2)
 		end
 		wait_for_render()
 	end
-	local function save_specific(cname, props)
-		local Ref = Instance.new(cname)
+	local function save_specific(className, properties)
+		local Ref = Instance.new(className)
 		local Item = ReturnItem(Ref.ClassName, Ref)
-		for pname, val in props do
+		for propertyName, val in properties do
 			local whitelisted, value, tag
-			if "Source" == pname then
+			if "Source" == propertyName then
 				tag = "ProtectedString"
 				value = XML_Descriptors.__PROTECTEDSTRING(val)
 				whitelisted = true
-			elseif "Name" == pname then
+			elseif "Name" == propertyName then
 				whitelisted = true
 				value, tag = ReturnValueAndTag(val, "string")
 			end
 			if whitelisted then
-				Item ..= ReturnProperty(tag, pname, value)
+				Item ..= ReturnProperty(tag, propertyName, value)
 			end
 		end
 		Item ..= "</Properties>"
 		return Item
 	end
-	local function save_hierarchy(h)
-		for _, i in h do
-			if IgnoreNotArchivable and not i.Archivable then
+	local function save_hierarchy(hierarchy)
+		for _, instance in hierarchy do
+			if IgnoreNotArchivable and not instance.Archivable then
 				continue
 			end
-			local SkipEntirely = IgnoreList[i]
+			local SkipEntirely = IgnoreList[instance]
 			if SkipEntirely then
 				continue
 			end
-			local ClassName = i.ClassName
-			local InstanceName = i.Name
+			local ClassName = instance.ClassName
+			local InstanceName = instance.Name
 			do
 				local OnIgnoredList = IgnoreList[ClassName]
 				if OnIgnoredList and (OnIgnoredList == true or OnIgnoredList[InstanceName]) then
@@ -1822,7 +1860,7 @@ local function synsaveinstance(opts, opts2)
 				end
 			end
 			if not DecompileIgnoring then
-				DecompileIgnoring = DecompileIgnore[i]
+				DecompileIgnoring = DecompileIgnore[instance]
 				if DecompileIgnoring == nil then
 					local DecompileIgnored = DecompileIgnore[ClassName]
 					if DecompileIgnored then
@@ -1830,7 +1868,7 @@ local function synsaveinstance(opts, opts2)
 					end
 				end
 				if DecompileIgnoring then
-					DecompileIgnoring = i
+					DecompileIgnoring = instance
 				elseif DecompileIgnoring == false then
 					DecompileIgnoring = 1
 				end
@@ -1840,13 +1878,13 @@ local function synsaveinstance(opts, opts2)
 				local Fix = NotCreatableFixes[ClassName]
 				if Fix then
 					if SaveNotCreatable then
-						ClassName, InstanceOverride = Fix, replaceClassName(i, InstanceName, ClassName)
+						ClassName, InstanceOverride = Fix, replaceClassName(instance, InstanceName, ClassName)
 					else
 						continue
 					end
 				else
-					if TreatUnionsAsParts and i:IsA("PartOperation") then
-						ClassName, InstanceOverride = "Part", replaceClassName(i, InstanceName, ClassName)
+					if TreatUnionsAsParts and instance:IsA("PartOperation") then
+						ClassName, InstanceOverride = "Part", replaceClassName(instance, InstanceName, ClassName)
 						ClassNameOverride = "BasePart"
 					elseif not ClassList[ClassName] then
 						if __DEBUG_MODE then
@@ -1858,15 +1896,15 @@ local function synsaveinstance(opts, opts2)
 				end
 			end
 			if not InstanceOverride then
-				InstanceOverride = InstancesOverrides[i]
+				InstanceOverride = InstancesOverrides[instance]
 			end
 			if InstanceOverride and InstanceOverride.__SaveSpecific then
 				savebuffer[savebuffer_size] = save_specific(ClassName, InstanceOverride.Properties)
 				savebuffer_size += 1
 			else
-				savebuffer[savebuffer_size] = ReturnItem(ClassTagOverride or ClassName, i)
+				savebuffer[savebuffer_size] = ReturnItem(ClassTagOverride or ClassName, instance)
 				savebuffer_size += 1
-				if not (IgnorePropertiesOfNotScriptsOnScriptsMode and not isLuaSourceContainer(i)) then
+				if not (IgnorePropertiesOfNotScriptsOnScriptsMode and not isLuaSourceContainer(instance)) then
 					local default_instance, new_def_inst
 					if IgnoreDefaultProperties then
 						default_instance = default_instances[ClassName]
@@ -1900,19 +1938,19 @@ local function synsaveinstance(opts, opts2)
 							continue
 						end
 						local Special, Category, Optional = Property.Special, Property.Category, Property.Optional
-						local raw = ReadProperty(i, Property, PropertyName, Special, Category, Optional)
+						local raw = ReadProperty(instance, Property, PropertyName, Special, Category, Optional)
 						if raw == __BREAK then
-							local ok, result = pcall(gethiddenproperty_fallback, i, PropertyName)
+							local p, result = pcall(gethiddenproperty_fallback, instance, PropertyName)
 							if result == nil and not Optional then
-								ok = nil
+								p = nil
 							end
-							if ok then
+							if p then
 								raw = result
 							else
 								local Fallback = Property.Fallback
 								if Fallback then
-									ok, result = pcall(Fallback, i)
-									if ok then
+									p, result = pcall(Fallback, instance)
+									if p then
 										raw = result
 									else
 										if __DEBUG_MODE then
@@ -1928,7 +1966,11 @@ local function synsaveinstance(opts, opts2)
 						if SharedStringOverwrite and ValueType == "BinaryString" then
 							ValueType = "SharedString"
 						end
-						if default_instance and not Property.Special and not (PropertyName == "Source" and isLuaSourceContainer(i)) then
+						if
+							default_instance
+							and not Property.Special
+							and not (PropertyName == "Source" and isLuaSourceContainer(instance))
+						then
 							if new_def_inst then
 								default_instance[PropertyName] = index(new_def_inst, PropertyName)
 							end
@@ -1942,8 +1984,13 @@ local function synsaveinstance(opts, opts2)
 							if raw then
 								if SaveNotCreatableWillBeEnabled then
 									local Fix = NotCreatableFixes[raw.ClassName]
-									if Fix
-										and (PropertyName == "PlayerToHideFrom" or ValueType ~= "Instance" and ValueType ~= Fix) then
+									if
+										Fix
+										and (
+											PropertyName == "PlayerToHideFrom"
+											or ValueType ~= "Instance" and ValueType ~= Fix
+										)
+									then
 										continue
 									end
 								end
@@ -1968,11 +2015,11 @@ local function synsaveinstance(opts, opts2)
 									else
 										local should_decompile = true
 										local LinkedSource
-										local LinkedSource_Url = i.LinkedSource
+										local LinkedSource_Url = instance.LinkedSource
 										local hasLinkedSource = LinkedSource_Url ~= ""
 										local LinkedSource_type
 										if hasLinkedSource then
-											local Path = i:GetFullName()
+											local Path = instance:GetFullName()
 											if RecoveredScripts then
 												table.insert(RecoveredScripts, Path)
 											end
@@ -1990,12 +2037,15 @@ local function synsaveinstance(opts, opts2)
 														value = "-- Not found in LinkedSource ScriptCache"
 														should_decompile = nil
 													end
-													LinkedSource_type = string.find(LinkedSource, "%a") and "hash" or "id"
+													LinkedSource_type = string.find(LinkedSource, "%a") and "hash"
+														or "id"
 													local asset = LinkedSource_type .. "=" .. LinkedSource
-													local ok, source = pcall(function()
-														return game:HttpGet("https://assetdelivery.roproxy.com/v1/asset/?" .. asset)
+													local p, source = pcall(function()
+														return game:HttpGet(
+															"https://assetdelivery.roproxy.com/v1/asset/?" .. asset
+														)
 													end)
-													if ok and filterLinkedSource(source) then
+													if p and filterLinkedSource(source) then
 														if ScriptCache then
 															ldeccache[LinkedSource] = source
 														end
@@ -2004,20 +2054,26 @@ local function synsaveinstance(opts, opts2)
 													end
 												end
 											else
-												warn("FAILED TO EXTRACT ORIGINAL SCRIPT SOURCE (OPEN A GITHUB ISSUE): ", i:GetFullName(), LinkedSource_Url)
+												warn(
+													"FAILED TO EXTRACT ORIGINAL SCRIPT SOURCE (OPEN A GITHUB ISSUE): ",
+													instance:GetFullName(),
+													LinkedSource_Url
+												)
 											end
 										end
 										if should_decompile then
-											local isLocalScript = i:IsA("LocalScript")
-											if isLocalScript and i.RunContext == Enum.RunContext.Server
+											local isLocalScript = instance:IsA("LocalScript")
+											if
+												isLocalScript and instance.RunContext == Enum.RunContext.Server
 												or not isLocalScript
-													and i:IsA("Script")
-													and i.RunContext ~= Enum.RunContext.Client then
+													and instance:IsA("Script")
+													and instance.RunContext ~= Enum.RunContext.Client
+											then
 												value = "-- [FilteringEnabled] Server Scripts are IMPOSSIBLE to save"
 											else
-												value = ldecompile(i)
+												value = ldecompile(instance)
 												if SaveBytecode then
-													local output = SaveBytecode(i)
+													local output = SaveBytecode(instance)
 													if output then
 														value = output .. value
 													end
@@ -2058,23 +2114,23 @@ local function synsaveinstance(opts, opts2)
 				end
 			end
 			if SkipEntirely ~= false then
-				local Children = InstanceOverride and InstanceOverride.__Children or i:GetChildren()
+				local Children = InstanceOverride and InstanceOverride.__Children or instance:GetChildren()
 				if #Children ~= 0 then
 					save_hierarchy(Children)
 				end
 			end
-			if DecompileIgnoring and DecompileIgnoring == i then
+			if DecompileIgnoring and DecompileIgnoring == instance then
 				DecompileIgnoring = nil
 			end
 			savebuffer[savebuffer_size] = "</Item>"
 			savebuffer_size += 1
 		end
 	end
-	local function save_extra(n, h, ccn, s)
-		savebuffer[savebuffer_size] = save_specific((ccn or "Folder"), { Name = n, Source = s })
+	local function save_extra(name, hierarchy, customClassName, source)
+		savebuffer[savebuffer_size] = save_specific((customClassName or "Folder"), { Name = name, Source = source })
 		savebuffer_size += 1
-		if h then
-			save_hierarchy(h)
+		if hierarchy then
+			save_hierarchy(hierarchy)
 		end
 		savebuffer[savebuffer_size] = "</Item>"
 		savebuffer_size += 1
@@ -2116,25 +2172,25 @@ local function synsaveinstance(opts, opts2)
 		if NilInstances and global_container.getnilinstances then
 			local nil_instances, nil_instances_size = {}, 1
 			local NilInstancesFixes = OPTIONS.NilInstancesFixes
-			for _, i in global_container.getnilinstances() do
-				if i == game then
-					i = nil
+			for _, instance in global_container.getnilinstances() do
+				if instance == game then
+					instance = nil
 				else
-					local ClassName = i.ClassName
-					local Fix = InheritsFix(NilInstancesFixes, ClassName, i)
+					local ClassName = instance.ClassName
+					local Fix = InheritsFix(NilInstancesFixes, ClassName, instance)
 					if Fix then
-						i = Fix(i, InstancesOverrides)
+						instance = Fix(instance, InstancesOverrides)
 					end
 					local Class = ClassList[ClassName]
 					if Class then
 						local ClassTags = Class.Tags
 						if ClassTags and ClassTags.Service then
-							i = nil
+							instance = nil
 						end
 					end
 				end
-				if i then
-					nil_instances[nil_instances_size] = i
+				if instance then
+					nil_instances[nil_instances_size] = instance
 					nil_instances_size += 1
 				end
 			end
@@ -2142,7 +2198,15 @@ local function synsaveinstance(opts, opts2)
 			save_extra("Nil Instances", nil_instances)
 		end
 		if OPTIONS.ReadMe then
-			save_extra("README", nil, "Script", "--[[\n" .. (#RecoveredScripts ~= 0 and "\t\tIMPORTANT: Original Source of these Scripts was Recovered: " .. service.HttpService:JSONEncode(RecoveredScripts) .. "\n" or "") .. [[
+			save_extra(
+				"README",
+				nil,
+				"Script",
+				"--[[\n"
+					.. (#RecoveredScripts ~= 0 and "\t\tIMPORTANT: Original Source of these Scripts was Recovered: " .. service.HttpService:JSONEncode(
+						RecoveredScripts
+					) .. "\n" or "")
+					.. [[
 		Thank you for using UniversalSynSaveInstance (Join to Copy Games) https://discord.gg/wx4ThpAsmw.
 
 		If you didn't save in Binary (rbxl) - it's recommended to save the game right away to take advantage of the binary format & to preserve values of certain properties if you used IgnoreDefaultProperties setting (as they might change in the future).
@@ -2176,7 +2240,20 @@ local function synsaveinstance(opts, opts2)
 		Or Destroy the Camera.
 
 		This file was generated with the following settings:
-		]] .. service.HttpService:JSONEncode(OPTIONS) .. "\n\n\t\tElapsed time: " .. os.clock() - elapse_t .. " PlaceId: " .. game.PlaceId .. " PlaceVersion: " .. game.PlaceVersion .. " Client Version: " .. version() .. " Executor: " .. (identify_executor and table.concat({ identify_executor() }, " ") or "Unknown") .. "\n]]")
+		]]
+					.. service.HttpService:JSONEncode(OPTIONS)
+					.. "\n\n\t\tElapsed time: "
+					.. os.clock() - elapse_t
+					.. " PlaceId: "
+					.. game.PlaceId
+					.. " PlaceVersion: "
+					.. game.PlaceVersion
+					.. " Client Version: "
+					.. version()
+					.. " Executor: "
+					.. (identify_executor and table.concat({ identify_executor() }, " ") or "Unknown")
+					.. "\n]]"
+			)
 		end
 		do
 			local tmp = { "<SharedStrings>" }
@@ -2190,38 +2267,44 @@ local function synsaveinstance(opts, opts2)
 				savebuffer_size += 1
 			end
 		end
-		savebuffer[savebuffer_size] = "</roblox><!-- Saved by UniversalSynSaveInstance (Join to Copy Games) https://discord.gg/wx4ThpAsmw -->"
+		savebuffer[savebuffer_size] =
+			"</roblox><!-- Saved by UniversalSynSaveInstance (Join to Copy Games) https://discord.gg/wx4ThpAsmw -->"
 		savebuffer_size += 1
 		save_cache(true)
 		do
 			if OPTIONS.Anonymous then
 				local LocalPlayer = service.Players.LocalPlayer
 				if LocalPlayer then
-					local function gsubCaseInsensitive(i, s, r)
-						local inputLower = string.lower(i)
-						s = string.lower(s)
+					local function gsubCaseInsensitive(input, search, replacement)
+						local inputLower = string.lower(input)
+						search = string.lower(search)
 						local lastFinish = 0
 						local subStrings = {}
-						local search_len = #s
-						local input_len = #i
+						local search_len = #search
+						local input_len = #input
 						while search_len <= input_len - lastFinish do
 							local init = lastFinish + 1
-							local start, finish = string.find(inputLower, s, init, true)
+							local start, finish = string.find(inputLower, search, init, true)
 							if start == nil then
 								break
 							end
-							table.insert(subStrings, string.sub(i, init, start - 1))
+							table.insert(subStrings, string.sub(input, init, start - 1))
 							lastFinish = finish
 						end
 						if lastFinish == 0 then
-							return i
+							return input
 						end
-						table.insert(subStrings, string.sub(i, lastFinish + 1))
-						return table.concat(subStrings, r)
+						table.insert(subStrings, string.sub(input, lastFinish + 1))
+						return table.concat(subStrings, replacement)
 					end
-					local Anonymous = type(OPTIONS.Anonymous) == "table" and OPTIONS.Anonymous or { UserId = "1", Name = "Roblox" }
+					local Anonymous = type(OPTIONS.Anonymous) == "table" and OPTIONS.Anonymous
+						or { UserId = "1", Name = "Roblox" }
 					for _, chunk in chunks do
-						chunk.str = gsubCaseInsensitive(string.gsub(chunk.str, LocalPlayer.UserId, Anonymous.UserId), LocalPlayer.Name, Anonymous.Name)
+						chunk.str = gsubCaseInsensitive(
+							string.gsub(chunk.str, LocalPlayer.UserId, Anonymous.UserId),
+							LocalPlayer.Name,
+							Anonymous.Name
+						)
 					end
 				end
 			end
@@ -2239,7 +2322,14 @@ local function synsaveinstance(opts, opts2)
 					local length = math.ceil(chunk.size / SEGMENT_SIZE)
 					for i = 1, length do
 						local savestr = string.sub(chunk.str, (i - 1) * SEGMENT_SIZE + 1, i * SEGMENT_SIZE)
-						run_with_loading("Writing to File " .. math.round(currentlen / totallen * 100) .. "% (Depends on Exec)", nil, true, appendfile, placename, savestr)
+						run_with_loading(
+							"Writing to File " .. math.round(currentlen / totallen * 100) .. "% (Depends on Exec)",
+							nil,
+							true,
+							appendfile,
+							placename,
+							savestr
+						)
 						currentlen += 1
 						if i ~= length then
 							task.wait()
@@ -2251,7 +2341,14 @@ local function synsaveinstance(opts, opts2)
 				for _, chunk in chunks do
 					totalstr ..= chunk.str
 				end
-				run_with_loading("Writing " .. get_size_format() .. " to File (Depends on Exec)", nil, true, writefile, placename, totalstr)
+				run_with_loading(
+					"Writing " .. get_size_format() .. " to File (Depends on Exec)",
+					nil,
+					true,
+					writefile,
+					placename,
+					totalstr
+				)
 			end
 		end
 		table.clear(SharedStrings)
@@ -2261,19 +2358,25 @@ local function synsaveinstance(opts, opts2)
 		local Players = service.Players
 		if IgnoreList.Model ~= true then
 			Connections = {}
-			local function ignoreCharacter(p)
-				table.insert(Connections, p.CharacterAdded:Connect(function(character)
-					IgnoreList[character] = true
-				end))
-				local Character = p.Character
+			local function ignoreCharacter(player)
+				table.insert(
+					Connections,
+					player.CharacterAdded:Connect(function(character)
+						IgnoreList[character] = true
+					end)
+				)
+				local Character = player.Character
 				if Character then
 					IgnoreList[Character] = true
 				end
 			end
 			if OPTIONS.RemovePlayerCharacters then
-				table.insert(Connections, Players.PlayerAdded:Connect(function(player)
-					ignoreCharacter(player)
-				end))
+				table.insert(
+					Connections,
+					Players.PlayerAdded:Connect(function(player)
+						ignoreCharacter(player)
+					end)
+				)
 				for _, player in Players:GetPlayers() do
 					ignoreCharacter(player)
 				end
@@ -2358,9 +2461,9 @@ local function synsaveinstance(opts, opts2)
 				local LocalPlayer = GetLocalPlayer()
 				local PlayerScripts = LocalPlayer:FindFirstChild("PlayerScripts")
 				if PlayerScripts then
-					local function construct_InstanceOverride(i)
-						local children = i:GetChildren()
-						InstancesOverrides[i] = {
+					local function construct_InstanceOverride(instance)
+						local children = instance:GetChildren()
+						InstancesOverrides[instance] = {
 							__Children = children,
 						}
 						for _, child in children do
@@ -2395,12 +2498,17 @@ local function synsaveinstance(opts, opts2)
 					end
 				end
 				anti_idle = Idled:Connect(function()
-					service.VirtualInputManager:SendMouseWheelEvent(service.UserInputService:GetMouseLocation().X, service.UserInputService:GetMouseLocation().Y, true, game)
+					service.VirtualInputManager:SendMouseWheelEvent(
+						service.UserInputService:GetMouseLocation().X,
+						service.UserInputService:GetMouseLocation().Y,
+						true,
+						game
+					)
 				end)
 			end)
 		end
 		elapse_t = os.clock()
-		local ok, err = xpcall(save_game, function(err)
+		local p, err = xpcall(save_game, function(err)
 			return debug.traceback(err)
 		end)
 		if SafeMode then
@@ -2424,7 +2532,7 @@ local function synsaveinstance(opts, opts2)
 				elapse_t = os.clock() - elapse_t
 				local Log10 = math.log10(elapse_t)
 				local ExtraTime = 10
-				if ok then
+				if p then
 					StatusText.Text = string.format("Saved! Time %.3f seconds; Size %s", elapse_t, get_size_format())
 					StatusText.TextColor3 = Color3.new(0, 1)
 					task.wait(Log10 * 2 + ExtraTime)
@@ -2442,7 +2550,7 @@ local function synsaveinstance(opts, opts2)
 				StatusText:Destroy()
 			end)
 		end
-		if OPTIONS.ShutdownWhenDone and ok then
+		if OPTIONS.ShutdownWhenDone and p then
 			game:Shutdown()
 		end
 	end
