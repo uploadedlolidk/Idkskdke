@@ -1,35 +1,33 @@
-local function string_find(s, pattern)
-	return string.find(s, pattern, nil, true)
+local function a(c, d)
+	return string.find(c, d, nil, true)
 end
-
-local function ArrayToDict(t, hybrid, val, strict)
-	local d = {}
-	if hybrid then
-		for k, v in t do
-			if type(k) == "number" then
-				d[v] = val or true
-			elseif type(v) == "table" then
-				d[k] = ArrayToDict(v, hybrid)
+local function b(c, d, e, f)
+	local g = {}
+	if d then
+		for h, i in c do
+			if type(h) == "number" then
+				g[i] = e or true
+			elseif type(i) == "table" then
+				g[h] = b(i, d)
 			else
-				d[k] = v
+				g[h] = i
 			end
 		end
 	else
-		for _, k in t do
-			if not strict or strict and type(k) == strict then
-				d[k] = true
+		for _, h in c do
+			if not f or f and type(h) == f then
+				g[h] = true
 			end
 		end
 	end
-	return d
+	return g
 end
-
-local global_container
+local c
 do
-	local fname = "UniversalMethodFinder"
-	local f
-	f, global_container = loadstring(game:HttpGet("https://raw.githubusercontent.com/luau/SomeHub/main/" .. fname .. ".luau", true), fname)()
-	f({
+	local d = "UniversalMethodFinder"
+	local e
+	e, c = loadstring(game:HttpGet("https://raw.githubusercontent.com/luau/SomeHub/main/" .. d .. ".luau", true), d)()
+	e({
 		base64encode = 'local a={...}local b=a[1]local function c(a,b)return string.find(a,b,nil,true)end;return c(b,"encode")and(c(b,"base64")or c(string.lower(tostring(a[2])),"base64"))',
 		gethiddenproperty = 'string.find(...,"get",nil,true) and string.find(...,"h",nil,true) and string.find(...,"prop",nil,true) and string.sub(...,#...) ~= "s"',
 		gethui = 'string.find(...,"get",nil,true) and string.find(...,"h",nil,true) and string.find(...,"ui",nil,true)',
@@ -40,163 +38,159 @@ do
 		setthreadidentity = 'string.find(...,"identity",nil,true) and string.find(...,"set",nil,true)',
 	}, true, 10)
 end
-
-local getId = identifyexecutor or getexecutorname or whatexecutor
-local EXEC_NAME = getId and getId() or ""
-local getHP = global_container.gethiddenproperty
-local af, rf, wf = appendfile, readfile, writefile
-local getBytecode = global_container.getscriptbytecode
-local b64enc = global_container.base64encode
-local sha384
-
-local service = setmetatable({}, {
-	__index = function(self, name)
-		local ok, res = pcall(Instance.new, name)
-		local svc = ok and res or game:GetService(name) or settings():GetService(name) or UserSettings():GetService(name)
-		if svc then
-			self[name] = svc
+local d = identifyexecutor or getexecutorname or whatexecutor
+local e = d and d() or ""
+local f = c.gethiddenproperty
+local g, h, i = appendfile, readfile, writefile
+local j = c.getscriptbytecode
+local k = c.base64encode
+local l
+local m = setmetatable({}, {
+	__index = function(n, o)
+		local p, q = pcall(Instance.new, o)
+		local r = p and q or game:GetService(o) or settings():GetService(o) or UserSettings():GetService(o)
+		if r then
+			n[o] = r
 		end
-		return svc
+		return r
 	end,
 })
-
-local getHP_fallback
+local n
 do
-	local ugc
-	getHP_fallback = function(inst, prop)
-		if not ugc then
-			ugc = service.UGCValidationService
+	local o
+	n = function(p, q)
+		if not o then
+			o = m.UGCValidationService
 		end
-		return ugc:GetPropertyValue(inst, prop)
+		return o:GetPropertyValue(p, q)
 	end
-	if getHP then
-		local ok, res = pcall(getHP, workspace, "StreamOutBehavior")
-		if not ok or res ~= nil and typeof(res) ~= "EnumItem" then
-			getHP = nil
+	if f then
+		local p, q = pcall(f, workspace, "StreamOutBehavior")
+		if not p or q ~= nil and typeof(q) ~= "EnumItem" then
+			f = nil
 		else
-			ok, res = pcall(getHP, Instance.new("AnimationRigData", Instance.new("Folder")), "parent")
-			if ok and res ~= nil and type(res) ~= "string" then
-				getHP = nil
+			p, q = pcall(f, Instance.new("AnimationRigData", Instance.new("Folder")), "parent")
+			if p and q ~= nil and type(q) ~= "string" then
+				f = nil
 			end
 		end
 	end
-	local function benchmark(f1, f2, ...)
-		local rank = table.create(2)
-		for i, f in { f1, f2 } do
-			local start = os.clock()
+	local function p(q, r, ...)
+		local s = table.create(2)
+		for t, u in { q, r } do
+			local v = os.clock()
 			for _ = 1, 50 do
-				f(...)
+				u(...)
 			end
-			rank[i] = { t = os.clock() - start, f = f }
+			s[t] = { t = os.clock() - v, f = u }
 		end
-		table.sort(rank, function(a, b)
-			return a.t < b.t
+		table.sort(s, function(w, x)
+			return w.t < x.t
 		end)
-		return rank[1].f
+		return s[1].f
 	end
-	local tStr = string.rep("\1\0\0\0\1\2\3\4\5\6\7", 50)
+	local q = string.rep("\1\0\0\0\1\2\3\4\5\6\7", 50)
 	do
 		if not bit32.byteswap or not pcall(bit32.byteswap, 1) then
 			bit32 = table.clone(bit32)
-			local function tobit(num)
-				num %= (bit32.bxor(num, 32))
-				if 0x80000000 < num then
-					num -= bit32.bxor(num, 32)
+			local function r(s)
+				s %= (bit32.bxor(s, 32))
+				if 0x80000000 < s then
+					s -= bit32.bxor(s, 32)
 				end
-				return num
+				return s
 			end
-			bit32.byteswap = function(num)
-				local BYTE_SIZE = 8
-				local MAX_BYTE_VALUE = 255
-				num %= bit32.bxor(2, 32)
-				local a = bit32.band(num, MAX_BYTE_VALUE)
-				num = bit32.rshift(num, BYTE_SIZE)
-				local b = bit32.band(num, MAX_BYTE_VALUE)
-				num = bit32.rshift(num, BYTE_SIZE)
-				local c = bit32.band(num, MAX_BYTE_VALUE)
-				num = bit32.rshift(num, BYTE_SIZE)
-				local d = bit32.band(num, MAX_BYTE_VALUE)
-				num = tobit(bit32.lshift(bit32.lshift(bit32.lshift(a, BYTE_SIZE) + b, BYTE_SIZE) + c, BYTE_SIZE) + d)
-				return num
+			bit32.byteswap = function(s)
+				local t = 8
+				local u = 255
+				s %= bit32.bxor(2, 32)
+				local v = bit32.band(s, u)
+				s = bit32.rshift(s, t)
+				local w = bit32.band(s, u)
+				s = bit32.rshift(s, t)
+				local x = bit32.band(s, u)
+				s = bit32.rshift(s, t)
+				local y = bit32.band(s, u)
+				s = r(bit32.lshift(bit32.lshift(bit32.lshift(v, t) + w, t) + x, t) + y)
+				return s
 			end
 			table.freeze(bit32)
 		end
-		local reselim_b64
+		local r
 		pcall(function()
-			local b64_enc_buf = loadstring(game:HttpGet("https://raw.githubusercontent.com/Reselim/Base64/master/Base64.lua", true), "Base64")().encode
-			reselim_b64 = function(raw)
-				return buffer.tostring(b64_enc_buf(buffer.fromstring(raw)))
+			local s = loadstring(game:HttpGet("https://raw.githubusercontent.com/Reselim/Base64/master/Base64.lua", true), "Base64")().encode
+			r = function(t)
+				return buffer.tostring(s(buffer.fromstring(t)))
 			end
 		end)
-		if b64enc and b64enc("\1\0\0\0\1") == "AQAAAAE=" then
-			if reselim_b64 then
-				b64enc = benchmark(b64enc, reselim_b64, tStr)
+		if k and k("\1\0\0\0\1") == "AQAAAAE=" then
+			if r then
+				k = p(k, r, q)
 			end
 		else
-			b64enc = reselim_b64
+			k = r
 		end
-		assert(b64enc, "base64encode not found")
+		assert(k, "base64encode not found")
 	end
 	do
-		local h = global_container.hash
-		if h then
-			sha384 = function(d)
-				return h(d, "sha384")
+		local r = c.hash
+		if r then
+			l = function(s)
+				return r(s, "sha384")
 			end
 		end
-		local fname = "RequireOnlineModule"
-		local hashlib_s384
+		local s = "RequireOnlineModule"
+		local t
 		pcall(function()
-			hashlib_s384 = loadstring(game:HttpGet("https://raw.githubusercontent.com/luau/SomeHub/main/" .. fname .. ".luau", true), fname)()(4544052033).sha384
+			t = loadstring(game:HttpGet("https://raw.githubusercontent.com/luau/SomeHub/main/" .. s .. ".luau", true), s)()(4544052033).sha384
 		end)
-		if hashlib_s384 then
-			if sha384 then
-				sha384 = benchmark(sha384, hashlib_s384, tStr)
+		if t then
+			if l then
+				l = p(l, t, q)
 			else
-				sha384 = hashlib_s384
+				l = t
 			end
 		end
-		assert(sha384, "sha384 hash function not found")
+		assert(l, "sha384 hash function not found")
 	end
 end
-
-local sharedStrs = {}
-local sharedStrIds = setmetatable({
+local o = {}
+local p = setmetatable({
 	identifier = 1e15,
 }, {
-	__index = function(self, s)
-		local id = b64enc(tostring(self.identifier))
-		self.identifier += 1
-		self[s] = id
-		return id
+	__index = function(q, r)
+		local s = k(tostring(q.identifier))
+		q.identifier += 1
+		q[r] = s
+		return s
 	end,
 })
-local inhProps = {}
-local defInsts = {}
-local referents, ref_size = {}, 0
-local function __BIT(...)
-	local val = 0
-	for i, bit in { ... } do
-		if bit then
-			val += 2 ^ (i - 1)
+local q = {}
+local r = {}
+local s, t = {}, 0
+local function u(...)
+	local v = 0
+	for w, x in { ... } do
+		if x then
+			v += 2 ^ (w - 1)
 		end
 	end
-	return val
+	return v
 end
-local function GetRef(inst)
-	local ref = referents[inst]
-	if not ref then
-		ref = ref_size
-		referents[inst] = ref
-		ref_size += 1
+local function v(w)
+	local x = s[w]
+	if not x then
+		x = t
+		s[w] = x
+		t += 1
 	end
-	return ref
+	return x
 end
-local function index(t, k)
-	return t[k]
+local function w(x, y)
+	return x[y]
 end
-local CLIENT_VERSION = tonumber(string.split(version(), ".")[2])
-local attr_Type_IDs = {
+local x = tonumber(string.split(version(), ".")[2])
+local y = {
 	string = 0x02,
 	boolean = 0x03,
 	number = 0x06,
@@ -224,7 +218,7 @@ local attr_Type_IDs = {
 	Region3int16 = 0x20,
 	Font = 0x21,
 }
-local CFrame_Rotation_IDs = {
+local z = {
 	["\0\0\128\63\0\0\0\0\0\0\0\0\0\0\0\0\0\0\128\63\0\0\0\0\0\0\0\0\0\0\0\0\0\0\128\63"] = 0x02,
 	["\0\0\128\63\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\128\191\0\0\0\0\0\0\128\63\0\0\0\0"] = 0x03,
 	["\0\0\128\63\0\0\0\0\0\0\0\0\0\0\0\0\0\0\128\191\0\0\0\0\0\0\0\0\0\0\0\0\0\0\128\191"] = 0x05,
@@ -250,243 +244,243 @@ local CFrame_Rotation_IDs = {
 	["\0\0\0\0\0\0\128\191\0\0\0\0\0\0\0\0\0\0\0\0\0\0\128\63\0\0\128\191\0\0\0\0\0\0\0\0"] = 0x22,
 	["\0\0\0\0\0\0\0\0\0\0\128\191\0\0\0\0\0\0\128\191\0\0\0\128\0\0\128\191\0\0\0\0\0\0\0\128"] = 0x23,
 }
-local Binary_Descriptors
-Binary_Descriptors = {
-	__SEQUENCE = function(v, fmt, kpSize, Envelope)
-		local kps = v.Keypoints
-		local kps_n = #kps
-		local len = 4 + (kpSize or 12) * kps_n
-		local b = buffer.create(len)
-		local offset = 0
-		buffer.writeu32(b, offset, kps_n)
-		offset += 4
-		for _, kp in kps do
-			buffer.writef32(b, offset, Envelope or kp.Envelope)
-			offset += 4
-			buffer.writef32(b, offset, kp.Time)
-			offset += 4
-			local val = kp.Value
-			if fmt then
-				offset += fmt(val, b, offset)
+local A
+A = {
+	__SEQUENCE = function(B, C, D, E)
+		local F = B.Keypoints
+		local G = #F
+		local H = 4 + (D or 12) * G
+		local I = buffer.create(H)
+		local J = 0
+		buffer.writeu32(I, J, G)
+		J += 4
+		for _, K in F do
+			buffer.writef32(I, J, E or K.Envelope)
+			J += 4
+			buffer.writef32(I, J, K.Time)
+			J += 4
+			local L = K.Value
+			if C then
+				J += C(L, I, J)
 			else
-				buffer.writef32(b, offset, val)
-				offset += 4
+				buffer.writef32(I, J, L)
+				J += 4
 			end
 		end
-		return b, len
+		return I, H
 	end,
-	["string"] = function(v)
-		local v_len = #v
-		local len = 4 + v_len
-		local b = buffer.create(len)
-		buffer.writeu32(b, 0, v_len)
-		buffer.writestring(b, 4, v)
-		return b, len
+	["string"] = function(B)
+		local C = #B
+		local D = 4 + C
+		local E = buffer.create(D)
+		buffer.writeu32(E, 0, C)
+		buffer.writestring(E, 4, B)
+		return E, D
 	end,
-	["boolean"] = function(v)
-		local b = buffer.create(1)
-		buffer.writeu8(b, 0, v and 1 or 0)
-		return b, 1
+	["boolean"] = function(B)
+		local C = buffer.create(1)
+		buffer.writeu8(C, 0, B and 1 or 0)
+		return C, 1
 	end,
-	["number"] = function(v)
-		local b = buffer.create(8)
-		buffer.writef64(b, 0, v)
-		return b, 8
+	["number"] = function(B)
+		local C = buffer.create(8)
+		buffer.writef64(C, 0, B)
+		return C, 8
 	end,
-	["UDim"] = function(v)
-		local b = buffer.create(8)
-		buffer.writef32(b, 0, v.Scale)
-		buffer.writei32(b, 4, v.Offset)
-		return b, 8
+	["UDim"] = function(B)
+		local C = buffer.create(8)
+		buffer.writef32(C, 0, B.Scale)
+		buffer.writei32(C, 4, B.Offset)
+		return C, 8
 	end,
-	["UDim2"] = function(v)
-		local b = buffer.create(16)
-		local udimDesc = Binary_Descriptors.UDim
-		local X = udimDesc(v.X)
-		buffer.copy(b, 0, X)
-		local Y = udimDesc(v.Y)
-		buffer.copy(b, 8, Y)
-		return b, 16
+	["UDim2"] = function(B)
+		local C = buffer.create(16)
+		local D = A.UDim
+		local E = D(B.X)
+		buffer.copy(C, 0, E)
+		local F = D(B.Y)
+		buffer.copy(C, 8, F)
+		return C, 16
 	end,
-	["Ray"] = function(v)
-		local b = buffer.create(24)
-		local v3Desc = Binary_Descriptors.Vector3
-		local Origin = v3Desc(v.Origin)
-		buffer.copy(b, 0, Origin)
-		local Direction = v3Desc(v.Direction)
-		buffer.copy(b, 12, Direction)
-		return b, 24
+	["Ray"] = function(B)
+		local C = buffer.create(24)
+		local D = A.Vector3
+		local E = D(B.Origin)
+		buffer.copy(C, 0, E)
+		local F = D(B.Direction)
+		buffer.copy(C, 12, F)
+		return C, 24
 	end,
-	["Faces"] = function(v)
-		local b = buffer.create(4)
-		buffer.writeu32(b, 0, __BIT(v.Right, v.Top, v.Back, v.Left, v.Bottom, v.Front))
-		return b, 4
+	["Faces"] = function(B)
+		local C = buffer.create(4)
+		buffer.writeu32(C, 0, u(B.Right, B.Top, B.Back, B.Left, B.Bottom, B.Front))
+		return C, 4
 	end,
-	["Axes"] = function(v)
-		local b = buffer.create(4)
-		buffer.writeu32(b, 0, __BIT(v.X, v.Y, v.Z))
-		return b, 4
+	["Axes"] = function(B)
+		local C = buffer.create(4)
+		buffer.writeu32(C, 0, u(B.X, B.Y, B.Z))
+		return C, 4
 	end,
-	["BrickColor"] = function(v)
-		local b = buffer.create(4)
-		buffer.writeu32(b, 0, v.Number)
-		return b, 4
+	["BrickColor"] = function(B)
+		local C = buffer.create(4)
+		buffer.writeu32(C, 0, B.Number)
+		return C, 4
 	end,
-	["Color3"] = function(v)
-		local b = buffer.create(12)
-		buffer.writef32(b, 0, v.R)
-		buffer.writef32(b, 4, v.G)
-		buffer.writef32(b, 8, v.B)
-		return b, 12
+	["Color3"] = function(B)
+		local C = buffer.create(12)
+		buffer.writef32(C, 0, B.R)
+		buffer.writef32(C, 4, B.G)
+		buffer.writef32(C, 8, B.B)
+		return C, 12
 	end,
-	["Vector2"] = function(v)
-		local b = buffer.create(8)
-		buffer.writef32(b, 0, v.X)
-		buffer.writef32(b, 4, v.Y)
-		return b, 8
+	["Vector2"] = function(B)
+		local C = buffer.create(8)
+		buffer.writef32(C, 0, B.X)
+		buffer.writef32(C, 4, B.Y)
+		return C, 8
 	end,
-	["Vector3"] = function(v)
-		local b = buffer.create(12)
-		buffer.writef32(b, 0, v.X)
-		buffer.writef32(b, 4, v.Y)
-		buffer.writef32(b, 8, v.Z)
-		return b, 12
+	["Vector3"] = function(B)
+		local C = buffer.create(12)
+		buffer.writef32(C, 0, B.X)
+		buffer.writef32(C, 4, B.Y)
+		buffer.writef32(C, 8, B.Z)
+		return C, 12
 	end,
-	["Vector2int16"] = function(v)
-		local b = buffer.create(4)
-		buffer.writei16(b, 0, v.X)
-		buffer.writei16(b, 2, v.Y)
-		return b, 4
+	["Vector2int16"] = function(B)
+		local C = buffer.create(4)
+		buffer.writei16(C, 0, B.X)
+		buffer.writei16(C, 2, B.Y)
+		return C, 4
 	end,
-	["Vector3int16"] = function(v)
-		local b = buffer.create(6)
-		buffer.writei16(b, 0, v.X)
-		buffer.writei16(b, 2, v.Y)
-		buffer.writei16(b, 4, v.Z)
-		return b, 6
+	["Vector3int16"] = function(B)
+		local C = buffer.create(6)
+		buffer.writei16(C, 0, B.X)
+		buffer.writei16(C, 2, B.Y)
+		buffer.writei16(C, 4, B.Z)
+		return C, 6
 	end,
-	["CFrame"] = function(v)
-		local X, Y, Z, R00, R01, R02, R10, R11, R12, R20, R21, R22 = v:GetComponents()
-		local rotId = CFrame_Rotation_IDs[string.pack("<fffffffff", R00, R01, R02, R10, R11, R12, R20, R21, R22)]
-		local len = rotId and 13 or 49
-		local b = buffer.create(len)
-		buffer.writef32(b, 0, X)
-		buffer.writef32(b, 4, Y)
-		buffer.writef32(b, 8, Z)
-		if rotId then
-			buffer.writeu8(b, 12, rotId)
+	["CFrame"] = function(B)
+		local C, D, E, F, G, H, I, J, K, L, M, N = B:GetComponents()
+		local O = z[string.pack("<fffffffff", F, G, H, I, J, K, L, M, N)]
+		local P = O and 13 or 49
+		local Q = buffer.create(P)
+		buffer.writef32(Q, 0, C)
+		buffer.writef32(Q, 4, D)
+		buffer.writef32(Q, 8, E)
+		if O then
+			buffer.writeu8(Q, 12, O)
 		else
-			buffer.writeu8(b, 12, 0x0)
-			buffer.writef32(b, 13, R00)
-			buffer.writef32(b, 17, R01)
-			buffer.writef32(b, 21, R02)
-			buffer.writef32(b, 25, R10)
-			buffer.writef32(b, 29, R11)
-			buffer.writef32(b, 33, R12)
-			buffer.writef32(b, 37, R20)
-			buffer.writef32(b, 41, R21)
-			buffer.writef32(b, 45, R22)
+			buffer.writeu8(Q, 12, 0x0)
+			buffer.writef32(Q, 13, F)
+			buffer.writef32(Q, 17, G)
+			buffer.writef32(Q, 21, H)
+			buffer.writef32(Q, 25, I)
+			buffer.writef32(Q, 29, J)
+			buffer.writef32(Q, 33, K)
+			buffer.writef32(Q, 37, L)
+			buffer.writef32(Q, 41, M)
+			buffer.writef32(Q, 45, N)
 		end
-		return b, len
+		return Q, P
 	end,
-	["EnumItem"] = function(v)
-		local bName, nameSize = Binary_Descriptors.string(tostring(v.EnumType))
-		local len = nameSize + 4
-		local b = buffer.create(len)
-		buffer.copy(b, 0, bName)
-		buffer.writeu32(b, nameSize, v.Value)
-		return b, len
+	["EnumItem"] = function(B)
+		local C, D = A.string(tostring(B.EnumType))
+		local E = D + 4
+		local F = buffer.create(E)
+		buffer.copy(F, 0, C)
+		buffer.writeu32(F, D, B.Value)
+		return F, E
 	end,
 	["NumberSequence"] = nil,
-	["ColorSequence"] = function(v)
-		return Binary_Descriptors.__SEQUENCE(v, function(c3, b, offset)
-			buffer.copy(b, offset, Binary_Descriptors.Color3(c3))
+	["ColorSequence"] = function(B)
+		return A.__SEQUENCE(B, function(C, D, E)
+			buffer.copy(D, E, A.Color3(C))
 			return 12
 		end, 20, 0)
 	end,
-	["NumberRange"] = function(v)
-		local b = buffer.create(8)
-		buffer.writef32(b, 0, v.Min)
-		buffer.writef32(b, 4, v.Max)
-		return b, 8
+	["NumberRange"] = function(B)
+		local C = buffer.create(8)
+		buffer.writef32(C, 0, B.Min)
+		buffer.writef32(C, 4, B.Max)
+		return C, 8
 	end,
-	["Rect"] = function(v)
-		local b = buffer.create(16)
-		local Vector2__descriptor = Binary_Descriptors.Vector2
-		local Min = Vector2__descriptor(v.Min)
-		buffer.copy(b, 0, Min)
-		local Max = Vector2__descriptor(v.Max)
-		buffer.copy(b, 8, Max)
-		return b, 16
+	["Rect"] = function(B)
+		local C = buffer.create(16)
+		local D = A.Vector2
+		local E = D(B.Min)
+		buffer.copy(C, 0, E)
+		local F = D(B.Max)
+		buffer.copy(C, 8, F)
+		return C, 16
 	end,
-	["PhysicalProperties"] = function(v)
-		local len = 1
-		if v then
-			len += 20
+	["PhysicalProperties"] = function(B)
+		local C = 1
+		if B then
+			C += 20
 		end
-		local b = buffer.create(len)
-		buffer.writeu8(b, 0, v and 1 or 0)
-		if v then
-			buffer.writef32(b, 1, v.Density)
-			buffer.writef32(b, 5, v.Friction)
-			buffer.writef32(b, 9, v.Elasticity)
-			buffer.writef32(b, 13, v.FrictionWeight)
-			buffer.writef32(b, 17, v.ElasticityWeight)
+		local D = buffer.create(C)
+		buffer.writeu8(D, 0, B and 1 or 0)
+		if B then
+			buffer.writef32(D, 1, B.Density)
+			buffer.writef32(D, 5, B.Friction)
+			buffer.writef32(D, 9, B.Elasticity)
+			buffer.writef32(D, 13, B.FrictionWeight)
+			buffer.writef32(D, 17, B.ElasticityWeight)
 		end
-		return b, len
+		return D, C
 	end,
-	["Region3"] = function(v)
-		local b = buffer.create(24)
-		local v3Desc = Binary_Descriptors.Vector3
-		local Min = v3Desc(v.Min)
-		buffer.copy(b, 0, Min)
-		local Max = v3Desc(v.Max)
-		buffer.copy(b, 12, Max)
-		return b, 24
+	["Region3"] = function(B)
+		local C = buffer.create(24)
+		local D = A.Vector3
+		local E = D(B.Min)
+		buffer.copy(C, 0, E)
+		local F = D(B.Max)
+		buffer.copy(C, 12, F)
+		return C, 24
 	end,
-	["Region3int16"] = function(v)
-		local b = buffer.create(12)
-		local Vector3int16__descriptor = Binary_Descriptors.Vector3int16
-		local Min = Vector3int16__descriptor(v.Min)
-		buffer.copy(b, 0, Min)
-		local Max = Vector3int16__descriptor(v.Max)
-		buffer.copy(b, 6, Max)
-		return b, 12
+	["Region3int16"] = function(B)
+		local C = buffer.create(12)
+		local D = A.Vector3int16
+		local E = D(B.Min)
+		buffer.copy(C, 0, E)
+		local F = D(B.Max)
+		buffer.copy(C, 6, F)
+		return C, 12
 	end,
-	["Font"] = 636 < CLIENT_VERSION and function(v)
-		local strDesc = Binary_Descriptors.string
-		local bFamily, famSize = strDesc(v.Family)
-		local bFaceId, faceIdSize = strDesc("")
-		local len = 3 + famSize + faceIdSize
-		local b = buffer.create(len)
-		local okW, w = pcall(index, v, "Weight")
-		local okS, s = pcall(index, v, "Style")
-		buffer.writeu16(b, 0, okW and w.Value or 0)
-		buffer.writeu8(b, 2, okS and s.Value or 0)
-		buffer.copy(b, 3, bFamily)
-		buffer.copy(b, 3 + famSize, bFaceId)
-		return b, len
-	end or function(v)
-		local strDesc = Binary_Descriptors.string
-		local bFamily, famSize = strDesc(v.Family)
-		local bFaceId, faceIdSize = strDesc("")
-		local len = 3 + famSize + faceIdSize
-		local b = buffer.create(len)
-		local fontStr = tostring(v)
-		local emptyW = string_find(fontStr, "Weight = ,")
-		local emptyS = string_find(fontStr, "Style =  }")
-		buffer.writeu16(b, 0, emptyW and 0 or v.Weight.Value)
-		buffer.writeu8(b, 2, emptyS and 0 or v.Style.Value)
-		buffer.copy(b, 3, bFamily)
-		buffer.copy(b, 3 + famSize, bFaceId)
-		return b, len
+	["Font"] = 636 < x and function(B)
+		local C = A.string
+		local D, E = C(B.Family)
+		local F, G = C("")
+		local H = 3 + E + G
+		local I = buffer.create(H)
+		local J, K = pcall(w, B, "Weight")
+		local L, M = pcall(w, B, "Style")
+		buffer.writeu16(I, 0, J and K.Value or 0)
+		buffer.writeu8(I, 2, L and M.Value or 0)
+		buffer.copy(I, 3, D)
+		buffer.copy(I, 3 + E, F)
+		return I, H
+	end or function(B)
+		local C = A.string
+		local D, E = C(B.Family)
+		local F, G = C("")
+		local H = 3 + E + G
+		local I = buffer.create(H)
+		local J = tostring(B)
+		local K = a(J, "Weight = ,")
+		local L = a(J, "Style =  }")
+		buffer.writeu16(I, 0, K and 0 or B.Weight.Value)
+		buffer.writeu8(I, 2, L and 0 or B.Style.Value)
+		buffer.copy(I, 3, D)
+		buffer.copy(I, 3 + E, F)
+		return I, H
 	end,
 }
 do
-	Binary_Descriptors.NumberSequence = Binary_Descriptors.__SEQUENCE
+	A.NumberSequence = A.__SEQUENCE
 end
-local ESCAPES_PATTERN = "[&<>\"'\0\1-\9\11-\12\14-\31\127-\255]"
-local ESCAPES = {
+local B = "[&<>\"'\0\1-\9\11-\12\14-\31\127-\255]"
+local C = {
 	["&"] = "&amp;",
 	["<"] = "&lt;",
 	[">"] = "&gt;",
@@ -494,168 +488,168 @@ local ESCAPES = {
 	["'"] = "&#39;",
 	["\0"] = "",
 }
-for rangeStart, rangeEnd in string.gmatch(ESCAPES_PATTERN, "(.)%-(.)") do
-	for charCode = string.byte(rangeStart), string.byte(rangeEnd) do
-		ESCAPES[string.char(charCode)] = "&#" .. charCode .. ";"
+for D, E in string.gmatch(B, "(.)%-(.)") do
+	for F = string.byte(D), string.byte(E) do
+		C[string.char(F)] = "&#" .. F .. ";"
 	end
 end
-local XML_Descriptors
-XML_Descriptors = {
-	__CDATA = function(v)
-		return "<![CDATA[" .. v .. "]]>"
+local G
+G = {
+	__CDATA = function(H)
+		return "<![CDATA[" .. H .. "]]>"
 	end,
-	__ENUM = function(v)
-		return v.Value, "token"
+	__ENUM = function(H)
+		return H.Value, "token"
 	end,
-	__NORMALIZE_NUMBER = function(v)
-		if v ~= v then
+	__NORMALIZE_NUMBER = function(H)
+		if H ~= H then
 			return "NAN"
-		elseif v == math.huge then
+		elseif H == math.huge then
 			return "INF"
-		elseif v == -math.huge then
+		elseif H == -math.huge then
 			return "-INF"
 		end
-		return v
+		return H
 	end,
-	__NORMALIZE_RANGE = function(v)
-		return v ~= v and "0" or v
+	__NORMALIZE_RANGE = function(H)
+		return H ~= H and "0" or H
 	end,
-	__MINMAX = function(min, max, desc)
-		return "<min>" .. desc(min) .. "</min><max>" .. desc(max) .. "</max>"
+	__MINMAX = function(H, I, J)
+		return "<min>" .. J(H) .. "</min><max>" .. J(I) .. "</max>"
 	end,
-	__PROTECTEDSTRING = function(v)
-		return string_find(v, "]]>") and string.gsub(v, ESCAPES_PATTERN, ESCAPES) or XML_Descriptors.__CDATA(v)
+	__PROTECTEDSTRING = function(H)
+		return a(H, "]]>") and string.gsub(H, B, C) or G.__CDATA(H)
 	end,
-	__SEQUENCE = function(v, fmt)
-		local normRange = XML_Descriptors.__NORMALIZE_RANGE
-		local seq = ""
-		for _, kp in v.Keypoints do
-			local val = kp.Value
-			seq ..= kp.Time .. " " .. (fmt and fmt(val) or normRange(val) .. " " .. normRange(kp.Envelope) .. " ")
+	__SEQUENCE = function(H, I)
+		local J = G.__NORMALIZE_RANGE
+		local K = ""
+		for _, L in H.Keypoints do
+			local M = L.Value
+			K ..= L.Time .. " " .. (I and I(M) or J(M) .. " " .. J(L.Envelope) .. " ")
 		end
-		return seq
+		return K
 	end,
-	__VECTOR = function(X, Y, Z)
-		local val = "<X>" .. X .. "</X><Y>" .. Y .. "</Y>"
-		if Z then
-			val ..= "<Z>" .. Z .. "</Z>"
+	__VECTOR = function(H, I, J)
+		local K = "<X>" .. H .. "</X><Y>" .. I .. "</Y>"
+		if J then
+			K ..= "<Z>" .. J .. "</Z>"
 		end
-		return val
+		return K
 	end,
-	Axes = function(v)
-		return "<axes>" .. __BIT(v.X, v.Y, v.Z) .. "</axes>"
+	Axes = function(H)
+		return "<axes>" .. u(H.X, H.Y, H.Z) .. "</axes>"
 	end,
-	BinaryString = function(v)
-		return v == "" and "" or b64enc(v)
+	BinaryString = function(H)
+		return H == "" and "" or k(H)
 	end,
-	BrickColor = function(v)
-		return v.Number
+	BrickColor = function(H)
+		return H.Number
 	end,
-	CFrame = function(v)
-		local X, Y, Z, R00, R01, R02, R10, R11, R12, R20, R21, R22 = v:GetComponents()
-		return XML_Descriptors.__VECTOR(X, Y, Z) .. "<R00>" .. R00 .. "</R00><R01>" .. R01 .. "</R01><R02>" .. R02 .. "</R02><R10>" .. R10 .. "</R10><R11>" .. R11 .. "</R11><R12>" .. R12 .. "</R12><R20>" .. R20 .. "</R20><R21>" .. R21 .. "</R21><R22>" .. R22 .. "</R22>", "CoordinateFrame"
+	CFrame = function(H)
+		local I, J, K, L, M, N, O, P, Q, R, S, T = H:GetComponents()
+		return G.__VECTOR(I, J, K) .. "<R00>" .. L .. "</R00><R01>" .. M .. "</R01><R02>" .. N .. "</R02><R10>" .. O .. "</R10><R11>" .. P .. "</R11><R12>" .. Q .. "</R12><R20>" .. R .. "</R20><R21>" .. S .. "</R21><R22>" .. T .. "</R22>", "CoordinateFrame"
 	end,
-	Color3 = function(v)
-		return "<R>" .. v.R .. "</R><G>" .. v.G .. "</G><B>" .. v.B .. "</B>"
+	Color3 = function(H)
+		return "<R>" .. H.R .. "</R><G>" .. H.G .. "</G><B>" .. H.B .. "</B>"
 	end,
-	Color3uint8 = function(v)
-		return 0xFF000000 + (math.floor(v.R * 255) * 0x10000) + (math.floor(v.G * 255) * 0x100) + math.floor(v.B * 255)
+	Color3uint8 = function(H)
+		return 0xFF000000 + (math.floor(H.R * 255) * 0x10000) + (math.floor(H.G * 255) * 0x100) + math.floor(H.B * 255)
 	end,
-	ColorSequence = function(v)
-		return XML_Descriptors.__SEQUENCE(v, function(c3)
-			local normRange = XML_Descriptors.__NORMALIZE_RANGE
-			return normRange(c3.R) .. " " .. normRange(c3.G) .. " " .. normRange(c3.B) .. " 0 "
+	ColorSequence = function(H)
+		return G.__SEQUENCE(H, function(I)
+			local J = G.__NORMALIZE_RANGE
+			return J(I.R) .. " " .. J(I.G) .. " " .. J(I.B) .. " 0 "
 		end)
 	end,
-	Content = function(v)
-		local srcType = v.SourceType
-		return srcType == Enum.ContentSourceType.None and "<null></null>" or srcType == Enum.ContentSourceType.Uri and "<uri>" .. XML_Descriptors.string(v.Uri) .. "</uri>" or srcType == Enum.ContentSourceType.Object and "<Ref>" .. GetRef(v.Object) .. "</Ref>"
+	Content = function(H)
+		local I = H.SourceType
+		return I == Enum.ContentSourceType.None and "<null></null>" or I == Enum.ContentSourceType.Uri and "<uri>" .. G.string(H.Uri) .. "</uri>" or I == Enum.ContentSourceType.Object and "<Ref>" .. v(H.Object) .. "</Ref>"
 	end,
-	ContentId = function(v)
-		return v == "" and "<null></null>" or "<url>" .. XML_Descriptors.string(v) .. "</url>", "Content"
+	ContentId = function(H)
+		return H == "" and "<null></null>" or "<url>" .. G.string(H) .. "</url>", "Content"
 	end,
-	CoordinateFrame = function(v)
-		return "<CFrame>" .. XML_Descriptors.CFrame(v) .. "</CFrame>"
+	CoordinateFrame = function(H)
+		return "<CFrame>" .. G.CFrame(H) .. "</CFrame>"
 	end,
-	Faces = function(v)
-		return "<faces>" .. __BIT(v.Right, v.Top, v.Back, v.Left, v.Bottom, v.Front) .. "</faces>"
+	Faces = function(H)
+		return "<faces>" .. u(H.Right, H.Top, H.Back, H.Left, H.Bottom, H.Front) .. "</faces>"
 	end,
-	Font = 636 < CLIENT_VERSION and function(v)
-		local okW, w = pcall(index, v, "Weight")
-		local okS, s = pcall(index, v, "Style")
-		return "<Family>" .. XML_Descriptors.ContentId(v.Family) .. "</Family><Weight>" .. (okW and XML_Descriptors.__ENUM(w) or "") .. "</Weight><Style>" .. (okS and s.Name or "") .. "</Style>"
-	end or function(v)
-		local fontStr = tostring(v)
-		local emptyW = string_find(fontStr, "Weight = ,")
-		local emptyS = string_find(fontStr, "Style =  }")
-		return "<Family>" .. XML_Descriptors.ContentId(v.Family) .. "</Family><Weight>" .. (emptyW and "" or XML_Descriptors.__ENUM(v.Weight)) .. "</Weight><Style>" .. (emptyS and "" or v.Style.Name) .. "</Style>"
+	Font = 636 < x and function(H)
+		local I, J = pcall(w, H, "Weight")
+		local K, L = pcall(w, H, "Style")
+		return "<Family>" .. G.ContentId(H.Family) .. "</Family><Weight>" .. (I and G.__ENUM(J) or "") .. "</Weight><Style>" .. (K and L.Name or "") .. "</Style>"
+	end or function(H)
+		local I = tostring(H)
+		local J = a(I, "Weight = ,")
+		local K = a(I, "Style =  }")
+		return "<Family>" .. G.ContentId(H.Family) .. "</Family><Weight>" .. (J and "" or G.__ENUM(H.Weight)) .. "</Weight><Style>" .. (K and "" or H.Style.Name) .. "</Style>"
 	end,
-	NumberRange = function(v)
-		local normRange = XML_Descriptors.__NORMALIZE_RANGE
-		return normRange(v.Min) .. " " .. normRange(v.Max)
+	NumberRange = function(H)
+		local I = G.__NORMALIZE_RANGE
+		return I(H.Min) .. " " .. I(H.Max)
 	end,
 	NumberSequence = nil,
-	PhysicalProperties = function(v)
-		local cp = "<CustomPhysics>" .. XML_Descriptors.bool(v and true or false) .. "</CustomPhysics>"
-		return v and cp .. "<Density>" .. v.Density .. "</Density><Friction>" .. v.Friction .. "</Friction><Elasticity>" .. v.Elasticity .. "</Elasticity><FrictionWeight>" .. v.FrictionWeight .. "</FrictionWeight><ElasticityWeight>" .. v.ElasticityWeight .. "</ElasticityWeight>" or cp
+	PhysicalProperties = function(H)
+		local I = "<CustomPhysics>" .. G.bool(H and true or false) .. "</CustomPhysics>"
+		return H and I .. "<Density>" .. H.Density .. "</Density><Friction>" .. H.Friction .. "</Friction><Elasticity>" .. H.Elasticity .. "</Elasticity><FrictionWeight>" .. H.FrictionWeight .. "</FrictionWeight><ElasticityWeight>" .. H.ElasticityWeight .. "</ElasticityWeight>" or I
 	end,
-	Ray = function(v)
-		local vector3 = XML_Descriptors.Vector3
-		return "<origin>" .. vector3(v.Origin) .. "</origin><direction>" .. vector3(v.Direction) .. "</direction>"
+	Ray = function(H)
+		local I = G.Vector3
+		return "<origin>" .. I(H.Origin) .. "</origin><direction>" .. I(H.Direction) .. "</direction>"
 	end,
-	Rect = function(v)
-		return XML_Descriptors.__MINMAX(v.Min, v.Max, XML_Descriptors.Vector2), "Rect2D"
+	Rect = function(H)
+		return G.__MINMAX(H.Min, H.Max, G.Vector2), "Rect2D"
 	end,
-	Region3 = function(v)
-		local Translation = v.CFrame.Position
-		local HalfSize = v.Size * 0.5
-		return XML_Descriptors.__MINMAX(Translation - HalfSize, Translation + HalfSize, XML_Descriptors.Vector3)
+	Region3 = function(H)
+		local I = H.CFrame.Position
+		local J = H.Size * 0.5
+		return G.__MINMAX(I - J, I + J, G.Vector3)
 	end,
-	Region3int16 = function(v)
-		return XML_Descriptors.__MINMAX(v.Min, v.Max, XML_Descriptors.Vector3int16)
+	Region3int16 = function(H)
+		return G.__MINMAX(H.Min, H.Max, G.Vector3int16)
 	end,
-	SharedString = function(v)
-		v = v == "" and "" or b64enc(v)
-		local id = sharedStrIds[v]
-		if sharedStrs[id] == nil then
-			sharedStrs[id] = v
+	SharedString = function(H)
+		H = H == "" and "" or k(H)
+		local I = p[H]
+		if o[I] == nil then
+			o[I] = H
 		end
-		return id
+		return I
 	end,
 	SecurityCapabilities = nil,
-	UDim = function(v)
-		return "<S>" .. v.Scale .. "</S><O>" .. v.Offset .. "</O>"
+	UDim = function(H)
+		return "<S>" .. H.Scale .. "</S><O>" .. H.Offset .. "</O>"
 	end,
-	UDim2 = function(v)
-		local X, Y = v.X, v.Y
-		return "<XS>" .. X.Scale .. "</XS><XO>" .. X.Offset .. "</XO><YS>" .. Y.Scale .. "</YS><YO>" .. Y.Offset .. "</YO>"
+	UDim2 = function(H)
+		local I, J = H.X, H.Y
+		return "<XS>" .. I.Scale .. "</XS><XO>" .. I.Offset .. "</XO><YS>" .. J.Scale .. "</YS><YO>" .. J.Offset .. "</YO>"
 	end,
-	Vector2 = function(v)
-		return XML_Descriptors.__VECTOR(v.X, v.Y)
+	Vector2 = function(H)
+		return G.__VECTOR(H.X, H.Y)
 	end,
 	Vector2int16 = nil,
-	Vector3 = function(v)
-		return XML_Descriptors.__VECTOR(v.X, v.Y, v.Z)
+	Vector3 = function(H)
+		return G.__VECTOR(H.X, H.Y, H.Z)
 	end,
 	Vector3int16 = nil,
-	bool = function(v)
-		return v and "true" or "false"
+	bool = function(H)
+		return H and "true" or "false"
 	end,
 	double = nil,
 	float = nil,
 	int = nil,
 	int64 = nil,
-	string = function(v)
-		return (v == nil or v == "") and "" or string_find(v, "]]>") and string.gsub(v, ESCAPES_PATTERN, ESCAPES) or XML_Descriptors.__CDATA(string.gsub(v, "\0", ""))
+	string = function(H)
+		return (H == nil or H == "") and "" or a(H, "]]>") and string.gsub(H, B, C) or G.__CDATA(string.gsub(H, "\0", ""))
 	end,
 }
 do
-	local BASE_CAPS
+	local H
 	pcall(function()
-		BASE_CAPS = SecurityCapabilities.new()
+		H = SecurityCapabilities.new()
 	end)
-	if BASE_CAPS then
-		local CAP_BITS = {
+	if H then
+		local I = {
 			Plugin = 2 ^ 0,
 			LocalUser = 2 ^ 1,
 			WritePlayer = 2 ^ 2,
@@ -690,22 +684,22 @@ do
 			PluginOrOpenCloud = 2 ^ 61,
 			Assistant = 2 ^ 62,
 		}
-		XML_Descriptors.SecurityCapabilities = function(v)
-			if v == BASE_CAPS then
+		G.SecurityCapabilities = function(J)
+			if J == H then
 				return 0
 			end
-			local res = 0
-			for _, flag in string.split(tostring(v), " | ") do
-				local bit = CAP_BITS[flag]
-				if bit then
-					res += bit
+			local K = 0
+			for _, L in string.split(tostring(J), " | ") do
+				local M = I[L]
+				if M then
+					K += M
 				end
 			end
-			return res
+			return K
 		end
 	end
 end
-for descName, redirName in {
+for H, I in {
 	NumberSequence = "__SEQUENCE",
 	Vector2int16 = "Vector2",
 	Vector3int16 = "Vector3",
@@ -714,65 +708,65 @@ for descName, redirName in {
 	int = "__NORMALIZE_NUMBER",
 	int64 = "__NORMALIZE_NUMBER",
 } do
-	XML_Descriptors[descName] = XML_Descriptors[redirName]
+	G[H] = G[I]
 end
-if CLIENT_VERSION < math.huge then
-	XML_Descriptors.Content = XML_Descriptors.ContentId
+if x < math.huge then
+	G.Content = G.ContentId
 end
-local ClassList
+local H
 do
-	local ClassPropEx = {
-		Whitelist = { TriangleMeshPart = ArrayToDict({ "CollisionFidelity" }) },
+	local I = {
+		Whitelist = { TriangleMeshPart = b({ "CollisionFidelity" }) },
 		Blacklist = {
-			LuaSourceContainer = ArrayToDict({ "ScriptGuid" }),
-			Instance = ArrayToDict({ "UniqueId", "HistoryId" }),
+			LuaSourceContainer = b({ "ScriptGuid" }),
+			Instance = b({ "UniqueId", "HistoryId" }),
 		},
 	}
-	local NSFixes = {
+	local J = {
 		Instance = {
-			AttributesSerialize = function(inst)
-				local attrs = inst:GetAttributes()
-				if not next(attrs) then
+			AttributesSerialize = function(K)
+				local L = K:GetAttributes()
+				if not next(L) then
 					return ""
 				end
-				local attrs_n = 0
-				local buffer_size = 4
-				local attrs_sorted = {}
-				local attrs_formatted = table.clone(attrs)
-				for attr, val in attrs do
-					attrs_n += 1
-					attrs_sorted[attrs_n] = attr
-					local Type = typeof(val)
-					local Descriptor = Binary_Descriptors[Type]
-					local attr_size
-					attrs_formatted[attr], attr_size = Descriptor(val)
-					buffer_size += 5 + #attr + attr_size
+				local M = 0
+				local N = 4
+				local O = {}
+				local P = table.clone(L)
+				for Q, R in L do
+					M += 1
+					O[M] = Q
+					local S = typeof(R)
+					local T = A[S]
+					local U
+					P[Q], U = T(R)
+					N += 5 + #Q + U
 				end
-				table.sort(attrs_sorted)
-				local b = buffer.create(buffer_size)
-				local offset = 0
-				buffer.writeu32(b, offset, attrs_n)
-				offset += 4
-				local strDesc = Binary_Descriptors.string
-				for _, attr in attrs_sorted do
-					local b_Name, Name_size = strDesc(attr)
-					buffer.copy(b, offset, b_Name)
-					offset += Name_size
-					buffer.writeu8(b, offset, attr_Type_IDs[typeof(attrs[attr])])
-					offset += 1
-					local bb = attrs_formatted[attr]
-					buffer.copy(b, offset, bb)
-					offset += buffer.len(bb)
+				table.sort(O)
+				local V = buffer.create(N)
+				local W = 0
+				buffer.writeu32(V, W, M)
+				W += 4
+				local X = A.string
+				for _, Q in O do
+					local Y, Z = X(Q)
+					buffer.copy(V, W, Y)
+					W += Z
+					buffer.writeu8(V, W, y[typeof(L[Q])])
+					W += 1
+					local aa = P[Q]
+					buffer.copy(V, W, aa)
+					W += buffer.len(aa)
 				end
-				return buffer.tostring(b)
+				return buffer.tostring(V)
 			end,
 			DefinesCapabilities = "Sandboxed",
-			Tags = function(inst)
-				local tags = inst:GetTags()
-				if #tags == 0 then
+			Tags = function(K)
+				local L = K:GetTags()
+				if #L == 0 then
 					return ""
 				end
-				return table.concat(tags, "\0")
+				return table.concat(L, "\0")
 			end,
 		},
 		BallSocketConstraint = { MaxFrictionTorqueXml = "MaxFrictionTorque" },
@@ -785,8 +779,8 @@ do
 		IntConstrainedValue = { value = "Value" },
 		Terrain = {
 			AcquisitionMethod = "LastUsedModificationMethod",
-			MaterialColors = function(inst)
-				local TERRAIN_MATERIAL_COLORS = {
+			MaterialColors = function(K)
+				local L = {
 					Enum.Material.Grass,
 					Enum.Material.Slate,
 					Enum.Material.Concrete,
@@ -809,17 +803,17 @@ do
 					Enum.Material.Limestone,
 					Enum.Material.Pavement,
 				}
-				local b = buffer.create(69)
-				local offset = 6
-				local RGB_components = { "R", "G", "B" }
-				for _, material in TERRAIN_MATERIAL_COLORS do
-					local color = inst:GetMaterialColor(material)
-					for _, component in RGB_components do
-						buffer.writeu8(b, offset, math.floor(color[component] * 255))
-						offset += 1
+				local M = buffer.create(69)
+				local N = 6
+				local O = { "R", "G", "B" }
+				for _, P in L do
+					local Q = K:GetMaterialColor(P)
+					for _, R in O do
+						buffer.writeu8(M, N, math.floor(Q[R] * 255))
+						N += 1
 					end
 				end
-				return buffer.tostring(b)
+				return buffer.tostring(M)
 			end,
 		},
 		TriangleMeshPart = {
@@ -835,30 +829,30 @@ do
 		Fire = { heat_xml = "Heat", size_xml = "Size" },
 		Humanoid = { Health_XML = "Health" },
 		HumanoidDescription = {
-			EmotesDataInternal = function(inst)
-				local emotes_data = ""
-				for name, ids in inst:GetEmotes() do
-					emotes_data ..= name .. "^" .. table.concat(ids, "^") .. "^\\"
+			EmotesDataInternal = function(K)
+				local L = ""
+				for M, N in K:GetEmotes() do
+					L ..= M .. "^" .. table.concat(N, "^") .. "^\\"
 				end
-				return emotes_data
+				return L
 			end,
-			EquippedEmotesDataInternal = function(inst)
-				local equipped_emotes_data = ""
-				for _, emote in inst:GetEquippedEmotes() do
-					equipped_emotes_data ..= emote.Slot .. "^" .. emote.Name .. "\\"
+			EquippedEmotesDataInternal = function(K)
+				local L = ""
+				for _, M in K:GetEquippedEmotes() do
+					L ..= M.Slot .. "^" .. M.Name .. "\\"
 				end
-				return equipped_emotes_data
+				return L
 			end,
 		},
 		LocalizationTable = {
-			Contents = function(inst)
-				return inst:GetContents()
+			Contents = function(K)
+				return K:GetContents()
 			end,
 		},
 		MaterialService = { Use2022MaterialsXml = "Use2022Materials" },
 		Model = {
-			ScaleFactor = function(inst)
-				return inst:GetScale()
+			ScaleFactor = function(K)
+				return K:GetScale()
 			end,
 			WorldPivotData = "WorldPivot",
 		},
@@ -875,192 +869,192 @@ do
 		},
 		Workspace = {
 			CollisionGroupData = function()
-				local collision_groups = game:GetService("PhysicsService"):GetRegisteredCollisionGroups()
-				local col_groups_n = #collision_groups
-				if col_groups_n == 0 then
+				local K = game:GetService("PhysicsService"):GetRegisteredCollisionGroups()
+				local L = #K
+				if L == 0 then
 					return "\1\0"
 				end
-				local buffer_size = 2
-				for _, group in collision_groups do
-					buffer_size += 7 + #group.name
+				local M = 2
+				for _, N in K do
+					M += 7 + #N.name
 				end
-				local b = buffer.create(buffer_size)
-				local offset = 0
-				buffer.writeu8(b, offset, 1)
-				offset += 1
-				buffer.writeu8(b, offset, col_groups_n)
-				offset += 1
-				for i, group in collision_groups do
-					local name, id, mask = group.name, i - 1, group.mask
-					local name_len = #name
-					buffer.writeu8(b, offset, id)
-					offset += 1
-					buffer.writeu8(b, offset, 4)
-					offset += 1
-					buffer.writei32(b, offset, mask)
-					offset += 4
-					buffer.writeu8(b, offset, name_len)
-					offset += 1
-					buffer.writestring(b, offset, name)
-					offset += name_len
+				local O = buffer.create(M)
+				local P = 0
+				buffer.writeu8(O, P, 1)
+				P += 1
+				buffer.writeu8(O, P, L)
+				P += 1
+				for Q, N in K do
+					local R, S, T = N.name, Q - 1, N.mask
+					local U = #R
+					buffer.writeu8(O, P, S)
+					P += 1
+					buffer.writeu8(O, P, 4)
+					P += 1
+					buffer.writei32(O, P, T)
+					P += 4
+					buffer.writeu8(O, P, U)
+					P += 1
+					buffer.writestring(O, P, R)
+					P += U
 				end
-				return buffer.tostring(b)
+				return buffer.tostring(O)
 			end,
 		},
 	}
-	local function FetchAPI()
-		local apiDump
-		local ok, e = pcall(function()
-			if EXEC_NAME == "Zenith" or EXEC_NAME == "Velocity" then
+	local function K()
+		local L
+		local M, N = pcall(function()
+			if e == "Zenith" or e == "Velocity" then
 				return
 			end
-			local verStr = tostring(CLIENT_VERSION)
-			local ok, res = pcall(rf, verStr)
-			if ok and res and res ~= "" and pcall(service.HttpService.JSONDecode, service.HttpService, res) then
-				apiDump = res
+			local O = tostring(x)
+			local P, Q = pcall(h, O)
+			if P and Q and Q ~= "" and pcall(m.HttpService.JSONDecode, m.HttpService, Q) then
+				L = Q
 				return
 			end
-			local matchVers, matched = {}
-			local deplHist = string.split(game:HttpGet("https://setup.rbxcdn.com/DeployHistory.txt", true), "\n")
-			for i = #deplHist, 1, -1 do
-				local l = deplHist[i]
-				local fver = string.match(l, "file version: ([%d, ]+)")
-				if fver then
-					if string.split(fver, ", ")[2] == verStr then
-						matched = true
-						local vhash = string.match(l, "(version%-[^%s]+)")
-						if vhash then
-							matchVers[vhash] = true
+			local R, S = {}, false
+			local T = string.split(game:HttpGet("https://setup.rbxcdn.com/DeployHistory.txt", true), "\n")
+			for U = #T, 1, -1 do
+				local V = T[U]
+				local W = string.match(V, "file version: ([%d, ]+)")
+				if W then
+					if string.split(W, ", ")[2] == O then
+						S = true
+						local X = string.match(V, "(version%-[^%s]+)")
+						if X then
+							R[X] = true
 						end
-					elseif matched then
+					elseif S then
 						break
 					end
 				end
 			end
-			for vhash in matchVers do
-				ok, res = pcall(game.HttpGet, game, "https://setup.rbxcdn.com/" .. vhash .. "-Full-API-Dump.json", true)
-				if ok then
-					local ok, res = pcall(service.HttpService.JSONDecode, service.HttpService, res)
-					if ok then
-						apiDump = service.HttpService:JSONEncode(res.Classes)
+			for Y in R do
+				P, Q = pcall(game.HttpGet, game, "https://setup.rbxcdn.com/" .. Y .. "-Full-API-Dump.json", true)
+				if P then
+					local Z, aa = pcall(m.HttpService.JSONDecode, m.HttpService, Q)
+					if Z then
+						L = m.HttpService:JSONEncode(aa.Classes)
 						break
 					end
 				end
 			end
-			wf(verStr, apiDump)
+			i(O, L)
 		end)
-		if not ok or not apiDump then
+		if not M or not L then
 			warn("[DEBUG] Failed to get " .. version() .. " API Dump, trying latest..")
-			warn("[DEBUG]", e)
-			apiDump = service.HttpService:JSONEncode(service.HttpService:JSONDecode(game:HttpGet("https://raw.githubusercontent.com/MaximumADHD/Roblox-Client-Tracker/roblox/Mini-API-Dump.json", true)).Classes)
+			warn("[DEBUG]", N)
+			L = m.HttpService:JSONEncode(m.HttpService:JSONDecode(game:HttpGet("https://raw.githubusercontent.com/MaximumADHD/Roblox-Client-Tracker/roblox/Mini-API-Dump.json", true)).Classes)
 		end
-		local clist = {}
-		local Whitelist, Blacklist = ClassPropEx.Whitelist, ClassPropEx.Blacklist
-		for _, apiClass in service.HttpService:JSONDecode(apiDump) do
-			local classProps, propsSize = {}, 1
-			local C = {
-				Properties = classProps,
-				Superclass = apiClass.Superclass,
+		local O = {}
+		local P, Q = I.Whitelist, I.Blacklist
+		for _, R in m.HttpService:JSONDecode(L) do
+			local S, T = {}, 1
+			local U = {
+				Properties = S,
+				Superclass = R.Superclass,
 			}
-			local cTags = apiClass.Tags
-			local cName = apiClass.Name
-			if cTags then
-				C.Tags = ArrayToDict(cTags, nil, nil, "string")
+			local V = R.Tags
+			local W = R.Name
+			if V then
+				U.Tags = b(V, nil, nil, "string")
 			end
-			local nsFixClass = NSFixes[cName]
-			local cWhitelist, cBlacklist = Whitelist[cName], Blacklist[cName]
-			for _, m in apiClass.Members do
-				if m.MemberType == "Property" then
-					local ser = m.Serialization
-					if ser.CanLoad then
-						local pName = m.Name
-						if (ser.CanSave or cWhitelist and cWhitelist[pName]) and not (cBlacklist and cBlacklist[pName]) then
-							local mTags = m.Tags
-							local vType = m.ValueType
-							local vTypeName = vType.Name
-							if 645 <= CLIENT_VERSION and vTypeName == "Content" then
+			local X = J[W]
+			local Y, Z = P[W], Q[W]
+			for _, aa in R.Members do
+				if aa.MemberType == "Property" then
+					local ab = aa.Serialization
+					if ab.CanLoad then
+						local ac = aa.Name
+						if (ab.CanSave or Y and Y[ac]) and not (Z and Z[ac]) then
+							local ad = aa.Tags
+							local ae = aa.ValueType
+							local af = ae.Name
+							if 645 <= x and af == "Content" then
 								continue
 							end
-							local spec, prefDescName
-							if mTags then
-								for _, tag in mTags do
-									if type(tag) == "table" then
-										prefDescName = tag.PreferredDescriptorName
-										if prefDescName and spec then
+							local ag, ah
+							if ad then
+								for _, ai in ad do
+									if type(ai) == "table" then
+										ah = ai.PreferredDescriptorName
+										if ah and ag then
 											break
 										end
-									elseif tag == "NotScriptable" then
-										spec = true
-										if prefDescName then
+									elseif ai == "NotScriptable" then
+										ag = true
+										if ah then
 											break
 										end
 									end
 								end
 							end
-							local prop = {
-								Name = pName,
-								Category = vType.Category,
-								ValueType = vTypeName,
-								Special = spec,
+							local aj = {
+								Name = ac,
+								Category = ae.Category,
+								ValueType = af,
+								Special = ag,
 								CanRead = nil,
 							}
-							if string.sub(vTypeName, 1, 8) == "Optional" then
-								prop.Optional = string.sub(vTypeName, 9)
+							if string.sub(af, 1, 8) == "Optional" then
+								aj.Optional = string.sub(af, 9)
 							end
-							if nsFixClass then
-								local nsFix = nsFixClass[pName]
-								if nsFix then
-									prop.Fallback = type(nsFix) == "function" and nsFix or prefDescName and function(inst)
-										local ok, res = pcall(index, inst, prefDescName)
-										if ok then
-											return res
+							if X then
+								local ak = X[ac]
+								if ak then
+									aj.Fallback = type(ak) == "function" and ak or ah and function(al)
+										local am, an = pcall(w, al, ah)
+										if am then
+											return an
 										end
-										return inst[nsFix]
-									end or function(inst)
-										return inst[nsFix]
+										return al[ak]
+									end or function(al)
+										return al[ak]
 									end
 								end
-							elseif prefDescName then
-								prop.Fallback = function(inst)
-									return inst[prefDescName]
+							elseif ah then
+								aj.Fallback = function(al)
+									return al[ah]
 								end
 							end
-							classProps[propsSize] = prop
-							propsSize += 1
+							S[T] = aj
+							T += 1
 						end
 					end
 				end
 			end
-			clist[cName] = C
+			O[W] = U
 		end
-		return clist
+		return O
 	end
-	local ok, res = pcall(FetchAPI)
-	if ok then
-		ClassList = res
+	local L, M = pcall(K)
+	if L then
+		H = M
 	else
 		warn("Failed to load the API Dump")
-		warn(res)
+		warn(M)
 		return
 	end
 end
-local GLOBAL_ENV = getgenv and getgenv() or _G or shared
-local function synsaveinstance(opts, opts2)
-	if GLOBAL_ENV.USSI then
+local I = getgenv and getgenv() or _G or shared
+local function J(K, L)
+	if I.USSI then
 		return
 	end
-	GLOBAL_ENV.USSI = true
+	I.USSI = true
 	do
-		local setthreadidentity = global_container.setthreadidentity
-		if setthreadidentity then
-			pcall(setthreadidentity, 8)
+		local M = c.setthreadidentity
+		if M then
+			pcall(M, 8)
 		end
 	end
-	local currentstr, currentsize, totalsize, chunks = "", 0, 0, table.create(1)
-	local sBuf, sBufSize = {}, 1
-	local header = '<roblox version="4">'
-	local statTxt
-	local OPTS = {
+	local M, N, O, P = "", 0, 0, table.create(1)
+	local Q, R = {}, 1
+	local S = '<roblox version="4">'
+	local T
+	local U = {
 		mode = "optimized",
 		noscripts = false,
 		scriptcache = true,
@@ -1072,7 +1066,7 @@ local function synsaveinstance(opts, opts2)
 			"TextChatService",
 			ModuleScript = nil,
 		},
-		IgnoreDefaultPlayerScripts = EXEC_NAME ~= "Wave" and true,
+		IgnoreDefaultPlayerScripts = e ~= "Wave" and true,
 		SaveBytecode = false,
 		IgnoreProperties = {},
 		IgnoreList = { "CoreGui", "CorePackages" },
@@ -1092,7 +1086,7 @@ local function synsaveinstance(opts, opts2)
 		IgnoreDefaultProperties = true,
 		IgnoreNotArchivable = true,
 		IgnorePropertiesOfNotScriptsOnScriptsMode = false,
-		IgnoreSpecialProperties = ArrayToDict({ "Fluxus", "Delta", "Solara" })[EXEC_NAME] or false,
+		IgnoreSpecialProperties = b({ "Fluxus", "Delta", "Solara" })[e] or false,
 		IsolateLocalPlayer = false,
 		IsolateLocalPlayerCharacter = false,
 		IsolatePlayers = false,
@@ -1111,10 +1105,10 @@ local function synsaveinstance(opts, opts2)
 			"TextSource",
 			"TouchTransmitter",
 		},
-		IgnoreSharedStrings = EXEC_NAME ~= "Wave" and true,
+		IgnoreSharedStrings = e ~= "Wave" and true,
 		SharedStringOverwrite = false,
-		TreatUnionsAsParts = EXEC_NAME == "Solara",
-		AlternativeWritefile = not ArrayToDict({ "WRD", "Xeno", "Zorara" })[EXEC_NAME],
+		TreatUnionsAsParts = e == "Solara",
+		AlternativeWritefile = not b({ "WRD", "Xeno", "Zorara" })[e],
 		OptionsAliases = {
 			DecompileTimeout = "timeout",
 			FileName = "FilePath",
@@ -1124,217 +1118,217 @@ local function synsaveinstance(opts, opts2)
 			SavePlayers = "IsolatePlayers",
 		},
 	}
-	local OPTS_lower, opts_valid = {}, {}
-	for optName in OPTS do
-		local optNameLower = string.lower(optName)
-		if OPTS_lower[optNameLower] then
-			warn("DUPLICATE OPTION", optName)
+	local V, W = {}, {}
+	for X in U do
+		local Y = string.lower(X)
+		if V[Y] then
+			warn("DUPLICATE OPTION", X)
 		else
-			OPTS_lower[optNameLower] = optName
+			V[Y] = X
 		end
 	end
-	for optAlias, optName in OPTS.OptionsAliases do
-		local optNameLower = string.lower(optAlias)
-		if OPTS_lower[optNameLower] then
-			warn("DUPLICATE ALIAS", optAlias)
+	for Z, X in U.OptionsAliases do
+		local Y = string.lower(Z)
+		if V[Y] then
+			warn("DUPLICATE ALIAS", Z)
 		else
-			OPTS_lower[optNameLower] = optName
+			V[Y] = X
 		end
 	end
 	do
-		local function mkNilFix(name, cname, sep)
-			return function(inst, instPropOverrides)
-				local exists
-				if not sep then
-					exists = OPTS.NilInstancesFixes[name]
+		local function X(Y, Z, aa)
+			return function(ab, ac)
+				local ad
+				if not aa then
+					ad = U.NilInstancesFixes[Y]
 				end
-				local fix
-				local noExist = not exists
-				if noExist then
-					fix = Instance.new(cname)
-					if not sep then
-						OPTS.NilInstancesFixes[name] = fix
+				local ae
+				local af = not ad
+				if af then
+					ae = Instance.new(Z)
+					if not aa then
+						U.NilInstancesFixes[Y] = ae
 					end
-					instPropOverrides[fix] = { __SaveSpecific = true, __Children = { inst }, Properties = { Name = name } }
+					ac[ae] = { __SaveSpecific = true, __Children = { ab }, Properties = { Name = Y } }
 				else
-					fix = exists
-					table.insert(instPropOverrides[fix].__Children, inst)
+					ae = ad
+					table.insert(ac[ae].__Children, ab)
 				end
-				if noExist then
-					return fix
+				if af then
+					return ae
 				end
 			end
 		end
-		OPTS.NilInstancesFixes.Animator = mkNilFix("Animator has to be placed under Humanoid or AnimationController", "AnimationController")
-		OPTS.NilInstancesFixes.AdPortal = mkNilFix("AdPortal must be parented to a Part", "Part")
-		OPTS.NilInstancesFixes.Attachment = mkNilFix("Attachments must be parented to a BasePart or another Attachment", "Part")
-		OPTS.NilInstancesFixes.BaseWrap = mkNilFix("BaseWrap must be parented to a MeshPart", "MeshPart")
-		OPTS.NilInstancesFixes.PackageLink = mkNilFix("Package already has a PackageLink", "Folder", true)
-		if opts2 and type(opts2) == "table" then
-			local tmp = opts
-			local t = typeof(tmp)
-			opts = opts2
-			if t == "Instance" then
-				opts.Object = tmp
-			elseif t == "table" and typeof(tmp[1]) == "Instance" then
-				opts.ExtraInstances = tmp
-				OPTS.IsModel = true
+		U.NilInstancesFixes.Animator = X("Animator has to be placed under Humanoid or AnimationController", "AnimationController")
+		U.NilInstancesFixes.AdPortal = X("AdPortal must be parented to a Part", "Part")
+		U.NilInstancesFixes.Attachment = X("Attachments must be parented to a BasePart or another Attachment", "Part")
+		U.NilInstancesFixes.BaseWrap = X("BaseWrap must be parented to a MeshPart", "MeshPart")
+		U.NilInstancesFixes.PackageLink = X("Package already has a PackageLink", "Folder", true)
+		if L and type(L) == "table" then
+			local Y = K
+			local Z = typeof(Y)
+			K = L
+			if Z == "Instance" then
+				K.Object = Y
+			elseif Z == "table" and typeof(Y[1]) == "Instance" then
+				K.ExtraInstances = Y
+				U.IsModel = true
 			end
 		end
-		local t = typeof(opts)
-		if t == "table" then
-			if typeof(opts[1]) == "Instance" then
-				OPTS.mode = "invalidmode"
-				OPTS.ExtraInstances = opts
-				OPTS.IsModel = true
-				opts = {}
+		local Z = typeof(K)
+		if Z == "table" then
+			if typeof(K[1]) == "Instance" then
+				U.mode = "invalidmode"
+				U.ExtraInstances = K
+				U.IsModel = true
+				K = {}
 			else
-				for k, v in opts do
-					local opt = OPTS_lower[string.lower(k)]
-					if opt then
-						OPTS[opt] = v
-						opts_valid[opt] = true
+				for aa, ab in K do
+					local ac = V[string.lower(aa)]
+					if ac then
+						U[ac] = ab
+						W[ac] = true
 					end
 				end
-				local dec = opts.Decompile
-				if dec ~= nil then
-					OPTS.noscripts = not dec
+				local ad = K.Decompile
+				if ad ~= nil then
+					U.noscripts = not ad
 				end
-				local saveChars = opts.SavePlayerCharacters
-				if saveChars ~= nil then
-					OPTS.RemovePlayerCharacters = not saveChars
+				local ae = K.SavePlayerCharacters
+				if ae ~= nil then
+					U.RemovePlayerCharacters = not ae
 				end
-				local remPlrs = opts.RemovePlayers
-				if remPlrs ~= nil then
-					OPTS.IsolatePlayers = not remPlrs
+				local af = K.RemovePlayers
+				if af ~= nil then
+					U.IsolatePlayers = not af
 				end
 			end
-		elseif t == "Instance" then
-			OPTS.mode = "invalidmode"
-			OPTS.Object = opts
-			opts = {}
+		elseif Z == "Instance" then
+			U.mode = "invalidmode"
+			U.Object = K
+			K = {}
 		else
-			opts = {}
+			K = {}
 		end
 	end
-	if OPTS.IgnoreDefaultPlayerScripts then
-		local decIgnore = OPTS.DecompileIgnore
-		local Path = service.StarterPlayer:FindFirstChild("StarterPlayerScripts")
-		local Exclude = { ModuleScript = { "PlayerModule" }, LocalScript = { "RbxCharacterSounds" } }
-		if Path then
-			for _, className in Exclude do
-				for _, name in className do
-					local Found = Path:FindFirstChild(name)
-					if Found then
-						table.insert(decIgnore, Found)
+	if U.IgnoreDefaultPlayerScripts then
+		local X = U.DecompileIgnore
+		local Y = m.StarterPlayer:FindFirstChild("StarterPlayerScripts")
+		local Z = { ModuleScript = { "PlayerModule" }, LocalScript = { "RbxCharacterSounds" } }
+		if Y then
+			for _, aa in Z do
+				for _, ab in aa do
+					local ac = Y:FindFirstChild(ab)
+					if ac then
+						table.insert(X, ac)
 					end
 				end
 			end
 		end
 	end
-	local instOverrides = {}
-	local decIgnore, ignList, ignProps, ncFixes = ArrayToDict(OPTS.DecompileIgnore, true), ArrayToDict(OPTS.IgnoreList, true), ArrayToDict(OPTS.IgnoreProperties), ArrayToDict(OPTS.NotCreatableFixes, true, "Folder")
-	local DEBUG = OPTS.__DEBUG_MODE
-	if DEBUG and type(DEBUG) ~= "function" then
-		DEBUG = warn
+	local X = {}
+	local Y, Z, aa, ab = b(U.DecompileIgnore, true), b(U.IgnoreList, true), b(U.IgnoreProperties), b(U.NotCreatableFixes, true, "Folder")
+	local ac = U.__DEBUG_MODE
+	if ac and type(ac) ~= "function" then
+		ac = warn
 	end
-	local fpath = OPTS.FilePath
-	local cacheInterval = OPTS.SaveCacheInterval
-	local saveInst = OPTS.Object
-	local isModel = OPTS.IsModel
-	if saveInst and opts.IsModel == nil then
-		isModel = true
+	local ad = U.FilePath
+	local ae = U.SaveCacheInterval
+	local af = U.Object
+	local ag = U.IsModel
+	if af and K.IsModel == nil then
+		ag = true
 	end
-	local ignDefProps = OPTS.IgnoreDefaultProperties
-	local ignNotArch = not OPTS.IgnoreNotArchivable
-	local ignPropsNotScript = OPTS.IgnorePropertiesOfNotScriptsOnScriptsMode
-	local oldGetHP
-	if OPTS and getHP then
-		oldGetHP = getHP
-		getHP = nil
+	local ah = U.IgnoreDefaultProperties
+	local ai = not U.IgnoreNotArchivable
+	local aj = U.IgnorePropertiesOfNotScriptsOnScriptsMode
+	local ak
+	if U and f then
+		ak = f
+		f = nil
 	end
-	local saveNC = OPTS.SaveNotCreatable
-	local unionsAsParts = OPTS.TreatUnionsAsParts
-	local decJobless = OPTS.DecompileJobless
-	if decJobless then
-		OPTS.scriptcache = true
+	local al = U.SaveNotCreatable
+	local am = U.TreatUnionsAsParts
+	local an = U.DecompileJobless
+	if an then
+		U.scriptcache = true
 	end
-	local scrCache = OPTS.scriptcache and getBytecode
-	local timeout = OPTS.timeout
-	local ignSharedStrs = OPTS.IgnoreSharedStrings
-	local sharedStrOvr = OPTS.SharedStringOverwrite
-	local decCache = GLOBAL_ENV.scriptcache
-	local decIgnoring, saveList, decompileLua, fname, t_start, saveNCEnabled, recScripts
-	if OPTS.ReadMe then
-		recScripts = {}
+	local ao = U.scriptcache and j
+	local ap = U.timeout
+	local aq = U.IgnoreSharedStrings
+	local ar = U.SharedStringOverwrite
+	local as = I.scriptcache
+	local at, au, av, aw, ax, ay, az
+	if U.ReadMe then
+		az = {}
 	end
-	if scrCache and not decCache then
-		decCache = {}
-		GLOBAL_ENV.scriptcache = decCache
+	if ao and not as then
+		as = {}
+		I.scriptcache = as
 	end
-	if saveInst == game then
-		OPTS.mode = "full"
-		saveInst = nil
-		isModel = nil
+	if af == game then
+		U.mode = "full"
+		af = nil
+		ag = nil
 	end
-	local function isLuaSourceContainer(inst)
-		return inst:IsA("LuaSourceContainer")
+	local function aA(aB)
+		return aB:IsA("LuaSourceContainer")
 	end
 	do
-		local mode = string.lower(OPTS.mode)
-		local tmp = table.clone(OPTS.ExtraInstances)
-		local pname = game.PlaceId
+		local aB = string.lower(U.mode)
+		local aC = table.clone(U.ExtraInstances)
+		local aD = game.PlaceId
 		pcall(function()
-			pname ..= " " .. service.MarketplaceService:GetProductInfo(pname).Name
+			aD ..= " " .. m.MarketplaceService:GetProductInfo(aD).Name
 		end)
-		local function saneFName(s)
-			return string.sub(string.gsub(string.gsub(string.gsub(s, "[^%w _]", ""), " +", " "), " +$", ""), 1, 240)
+		local function aE(aF)
+			return string.sub(string.gsub(string.gsub(string.gsub(aF, "[^%w _]", ""), " +", " "), " +$", ""), 1, 240)
 		end
-		if saveInst then
-			if mode == "optimized" then
-				mode = "full"
+		if af then
+			if aB == "optimized" then
+				aB = "full"
 			end
-			for _, k in {
+			for _, aF in {
 				"IsolateLocalPlayer",
 				"IsolateLocalPlayerCharacter",
 				"IsolatePlayers",
 				"IsolateStarterPlayer",
 				"NilInstances",
 			} do
-				if opts_valid[k] == nil then
-					OPTS[k] = false
+				if W[aF] == nil then
+					U[aF] = false
 				end
 			end
 		end
-		if isModel then
-			fname = (fpath or saneFName("model " .. pname .. " " .. (saveInst or tmp[1] or game):GetFullName())) .. ".rbxmx"
+		if ag then
+			aw = (ad or aE("model " .. aD .. " " .. (af or aC[1] or game):GetFullName())) .. ".rbxmx"
 		else
-			fname = (fpath or saneFName("place " .. pname)) .. ".rbxlx"
+			aw = (ad or aE("place " .. aD)) .. ".rbxlx"
 		end
-		if GLOBAL_ENV[fname] then
+		if I[aw] then
 			return
 		end
-		GLOBAL_ENV[fname] = true
-		GLOBAL_ENV.USSI = nil
-		if mode ~= "scripts" then
-			ignPropsNotScript = nil
+		I[aw] = true
+		I.USSI = nil
+		if aB ~= "scripts" then
+			aj = nil
 		end
-		local root = saveInst or game
-		if mode == "full" then
-			if not saveInst then
-				local children = root:GetChildren()
-				if 0 < #children then
-					local tmpDict = ArrayToDict(tmp)
-					for _, c in children do
-						if not tmpDict[c] then
-							table.insert(tmp, c)
+		local aG = af or game
+		if aB == "full" then
+			if not af then
+				local aH = aG:GetChildren()
+				if 0 < #aH then
+					local aI = b(aC)
+					for _, aJ in aH do
+						if not aI[aJ] then
+							table.insert(aC, aJ)
 						end
 					end
 				end
 			end
-		elseif mode == "optimized" then
-			local tmpDict = ArrayToDict(tmp)
-			for _, svcName in {
+		elseif aB == "optimized" then
+			local aI = b(aC)
+			for _, aK in {
 				"Workspace",
 				"Players",
 				"Lighting",
@@ -1353,457 +1347,457 @@ local function synsaveinstance(opts, opts2)
 				"LocalizationService",
 				"JointsService",
 			} do
-				local svc = game:FindService(svcName)
-				if svc and not tmpDict[svc] then
-					table.insert(tmp, svc)
+				local aL = game:FindService(aK)
+				if aL and not aI[aL] then
+					table.insert(aC, aL)
 				end
 			end
-		elseif mode == "scripts" then
-			local unique = {}
-			for _, inst in root:GetDescendants() do
-				if isLuaSourceContainer(inst) then
-					local p = inst.Parent
-					while p and p ~= root do
-						inst = inst.Parent
-						p = inst.Parent
+		elseif aB == "scripts" then
+			local aM = {}
+			for _, aN in aG:GetDescendants() do
+				if aA(aN) then
+					local aO = aN.Parent
+					while aO and aO ~= aG do
+						aN = aN.Parent
+						aO = aN.Parent
 					end
-					if p then
-						unique[inst] = true
+					if aO then
+						aM[aN] = true
 					end
 				end
 			end
-			for inst in unique do
-				table.insert(tmp, inst)
+			for aN in aM do
+				table.insert(aC, aN)
 			end
 		end
-		saveList = tmp
-		if saveInst then
-			table.insert(saveList, 1, saveInst)
+		au = aC
+		if af then
+			table.insert(au, 1, af)
 		end
 	end
-	local isoLP = OPTS.IsolateLocalPlayer
-	local isoLPC = OPTS.IsolateLocalPlayerCharacter
-	local isoP = OPTS.IsolatePlayers
-	local isoSP = OPTS.IsolateStarterPlayer
-	local nilInsts = OPTS.NilInstances
-	if nilInsts and enablenilinstances then
+	local aB = U.IsolateLocalPlayer
+	local aC = U.IsolateLocalPlayerCharacter
+	local aD = U.IsolatePlayers
+	local aE = U.IsolateStarterPlayer
+	local aF = U.NilInstances
+	if aF and enablenilinstances then
 		enablenilinstances()
 	end
-	local function get_size_format()
-		local Size
-		for i, unit in {
+	local function aG()
+		local aH
+		for aI, aJ in {
 			"B",
 			"KB",
 			"MB",
 			"GB",
 			"TB",
 		} do
-			if totalsize < 0x400 ^ i then
-				Size = math.floor(totalsize / (0x400 ^ (i - 1)) * 10) / 10 .. " " .. unit
+			if O < 0x400 ^ aI then
+				aH = math.floor(O / (0x400 ^ (aI - 1)) * 10) / 10 .. " " .. aJ
 				break
 			end
 		end
-		return Size
+		return aH
 	end
-	local RunService = service.RunService
-	local function wait_for_render()
-		RunService.RenderStepped:Wait()
+	local aH = m.RunService
+	local function aI()
+		aH.RenderStepped:Wait()
 	end
-	local Loading
-	local function run_with_loading(txt, keep, wait, taskFn, ...)
-		local prevStat
-		if statTxt then
-			if keep then
-				prevStat = statTxt.Text
+	local aJ
+	local function aK(aL, aM, aN, aO, ...)
+		local aP
+		if T then
+			if aM then
+				aP = T.Text
 			end
-			Loading = task.spawn(function()
-				local spin_i = 0
-				local spinChars = { "|", "/", "—", "\\" }
-				local spinLen = #spinChars
-				local function getLoadingText()
-					spin_i += 1
-					if spinLen < spin_i then
-						spin_i = 1
+			aJ = task.spawn(function()
+				local aQ = 0
+				local aR = { "|", "/", "—", "\\" }
+				local aS = #aR
+				local function aT()
+					aQ += 1
+					if aS < aQ then
+						aQ = 1
 					end
-					return spinChars[spin_i]
+					return aR[aQ]
 				end
-				txt ..= " "
+				aL ..= " "
 				while true do
-					statTxt.Text = txt .. getLoadingText()
+					T.Text = aL .. aT()
 					task.wait(0.25)
 				end
 			end)
-			if wait then
-				wait_for_render()
+			if aN then
+				aI()
 			end
 		end
-		local res = { taskFn(...) }
-		if Loading then
-			task.cancel(Loading)
-			Loading = nil
-			if prevStat then
-				statTxt.Text = prevStat
+		local aU = { aO(...) }
+		if aJ then
+			task.cancel(aJ)
+			aJ = nil
+			if aP then
+				T.Text = aP
 			end
 		end
-		return unpack(res)
+		return unpack(aU)
 	end
-	local function construct_TimeoutHandler(t, fn, t_ret)
-		return t < 0 and function(scr)
-			return pcall(fn, scr)
-		end or function(scr)
-			local thr = coroutine.running()
-			local tThr, cancelled
-			tThr = task.delay(t, function()
-				cancelled = true
-				coroutine.resume(thr, nil, t_ret)
+	local function aL(aM, aN, aO)
+		return aM < 0 and function(aP)
+			return pcall(aN, aP)
+		end or function(aP)
+			local aQ = coroutine.running()
+			local aR, aS
+			aR = task.delay(aM, function()
+				aS = true
+				coroutine.resume(aQ, nil, aO)
 			end)
 			task.spawn(function()
-				local ok, res = pcall(fn, scr)
-				if cancelled then
+				local aT, aU = pcall(aN, aP)
+				if aS then
 					return
 				end
-				task.cancel(tThr)
-				while coroutine.status(thr) ~= "suspended" do
+				task.cancel(aR)
+				while coroutine.status(aQ) ~= "suspended" do
 					task.wait()
 				end
-				coroutine.resume(thr, ok, res)
+				coroutine.resume(aQ, aT, aU)
 			end)
 			return coroutine.yield()
 		end
 	end
-	local getbytecode
-	if getBytecode then
-		getbytecode = construct_TimeoutHandler(3, getBytecode)
+	local aM
+	if j then
+		aM = aL(3, j)
 	end
-	local SaveBytecode
-	if OPTS.SaveBytecode and getBytecode then
-		SaveBytecode = function(scr)
-			local ok, bc = getbytecode(scr)
-			if ok and bc and bc ~= "" then
-				return "-- Bytecode (Base64):\n-- " .. b64enc(bc) .. "\n\n"
+	local aN
+	if U.SaveBytecode and j then
+		aN = function(aO)
+			local aP, aQ = aM(aO)
+			if aP and aQ and aQ ~= "" then
+				return "-- Bytecode (Base64):\n-- " .. k(aQ) .. "\n\n"
 			end
 		end
 	end
 	do
-		local Decomp = decompile
-		if OPTS.noscripts then
-			decompileLua = function()
+		local aO = decompile
+		if U.noscripts then
+			av = function()
 				return "-- Decompiling is disabled"
 			end
-		elseif Decomp then
-			local dec = construct_TimeoutHandler(timeout, Decomp, "Decompiler timed out")
-			decompileLua = function(scr)
-				local hash_bc
-				if scrCache then
-					local ok, bc = getbytecode(scr)
-					local cached
-					if ok then
-						if not bc or bc == "" then
+		elseif aO then
+			local aP = aL(ap, aO, "Decompiler timed out")
+			av = function(aQ)
+				local aR
+				if ao then
+					local aS, aT = aM(aQ)
+					local aU
+					if aS then
+						if not aT or aT == "" then
 							return "-- The Script is Empty"
 						end
-						hash_bc = sha384(bc)
-						cached = decCache[hash_bc]
+						aR = l(aT)
+						aU = as[aR]
 					end
-					if cached then
-						if DEBUG then
-							DEBUG("Found in Cache", scr:GetFullName())
+					if aU then
+						if ac then
+							ac("Found in Cache", aQ:GetFullName())
 						end
-						return cached
+						return aU
 					end
 				else
-					if decJobless then
+					if an then
 						return "-- Not found in already decompiled ScriptCache"
 					end
 					task.wait()
 				end
-				local ok, res = run_with_loading("Decompiling " .. scr.Name, true, nil, dec, scr)
-				if not res then
-					ok, res = false, "Empty Output"
+				local aS, aV = aK("Decompiling " .. aQ.Name, true, nil, aP, aQ)
+				if not aV then
+					aS, aV = false, "Empty Output"
 				end
-				local out
-				if ok then
-					res = string.gsub(res, "\0", "\\0")
-					out = res
+				local aW
+				if aS then
+					aV = string.gsub(aV, "\0", "\\0")
+					aW = aV
 				else
-					out = "--[[ Failed to decompile. Reason:\n" .. (res or "") .. "\n]]"
+					aW = "--[[ Failed to decompile. Reason:\n" .. (aV or "") .. "\n]]"
 				end
-				if scrCache and hash_bc then
-					decCache[hash_bc] = out
-					if DEBUG then
-						DEBUG("Cached", scr:GetFullName())
+				if ao and aR then
+					as[aR] = aW
+					if ac then
+						ac("Cached", aQ:GetFullName())
 					end
 				end
-				return out
+				return aW
 			end
 		else
-			decompileLua = function()
+			av = function()
 				return "-- Your Executor does NOT have a Decompiler"
 			end
 		end
 	end
-	local function GetLocalPlayer()
-		return service.Players.LocalPlayer or service.Players:GetPropertyChangedSignal("LocalPlayer"):Wait() or service.Players.LocalPlayer
+	local function aO()
+		return m.Players.LocalPlayer or m.Players:GetPropertyChangedSignal("LocalPlayer"):Wait() or m.Players.LocalPlayer
 	end
-	local function filterLinkedSource(s)
-		local ok, res = pcall(service.HttpService.JSONDecode, service.HttpService, s)
-		if ok and res.errors then
+	local function aP(aQ)
+		local aR, aS = pcall(m.HttpService.JSONDecode, m.HttpService, aQ)
+		if aR and aS.errors then
 			return
 		end
 		return true
 	end
-	local function replaceClassName(inst, instName, cname)
-		local instOvr
-		if instName ~= cname then
-			instOvr = instOverrides[inst]
-			if not instOvr then
-				instOvr = { Properties = { Name = "[" .. cname .. "] " .. instName } }
-				instOverrides[inst] = instOvr
+	local function aQ(aR, aS, aT)
+		local aU
+		if aS ~= aT then
+			aU = X[aR]
+			if not aU then
+				aU = { Properties = { Name = "[" .. aT .. "] " .. aS } }
+				X[aR] = aU
 			end
 		end
-		return instOvr
+		return aU
 	end
-	local function filterPropVal(res, pname, cat)
-		return res == nil or res == "can't get value" or type(res) == "string" and (cat == "Enum" or string_find(res, "Unable to get property " .. pname))
+	local function aR(aS, aT, aU)
+		return aS == nil or aS == "can't get value" or type(aS) == "string" and (aU == "Enum" or a(aS, "Unable to get property " .. aT))
 	end
-	local __BREAK = "__BREAK" .. service.HttpService:GenerateGUID(false)
-	local function ReadProperty(inst, prop, pname, spec, cat, opt)
-		local raw = __BREAK
-		local instOvr = instOverrides[inst]
-		if instOvr then
-			local propsOvr = instOvr.Properties
-			if propsOvr then
-				local pOvr = propsOvr[pname]
-				if pOvr ~= nil then
-					return pOvr
+	local aS = "__BREAK" .. m.HttpService:GenerateGUID(false)
+	local function aT(aU, aV, aW, aX, aY, aZ)
+		local aa = aS
+		local ab = X[aU]
+		if ab then
+			local ac = ab.Properties
+			if ac then
+				local ad = ac[aW]
+				if ad ~= nil then
+					return ad
 				end
 			end
 		end
-		local canRead = prop.CanRead
-		if canRead == false then
-			return __BREAK
+		local ae = aV.CanRead
+		if ae == false then
+			return aS
 		end
-		if spec then
-			if getHP then
-				local ok, res = pcall(getHP, inst, pname)
-				if ok then
-					raw = res
+		if aX then
+			if f then
+				local af, ag = pcall(f, aU, aW)
+				if af then
+					aa = ag
 				end
-				if filterPropVal(raw, pname, cat) then
-					if res ~= nil or not opt then
-						if DEBUG then
-							DEBUG("Filtered", pname)
+				if aR(aa, aW, aY) then
+					if ag ~= nil or not aZ then
+						if ac then
+							ac("Filtered", aW)
 						end
-						prop.CanRead = false
+						aV.CanRead = false
 					end
-					return __BREAK
+					return aS
 				end
 			end
 		else
-			if canRead then
-				raw = inst[pname]
+			if ae then
+				aa = aU[aW]
 			else
-				local ok, res = pcall(index, inst, pname)
-				if ok then
-					raw = res
-				elseif getHP then
-					ok, res = pcall(getHP, inst, pname)
-					if ok then
-						raw = res
-						prop.Special = true
+				local af, ag = pcall(w, aU, aW)
+				if af then
+					aa = ag
+				elseif f then
+					af, ag = pcall(f, aU, aW)
+					if af then
+						aa = ag
+						aV.Special = true
 					end
 				end
-				prop.CanRead = ok
-				if not ok or filterPropVal(raw, pname, cat) then
-					return __BREAK
+				aV.CanRead = af
+				if not af or aR(aa, aW, aY) then
+					return aS
 				end
 			end
 		end
-		return raw
+		return aa
 	end
-	local function ReturnItem(cname, inst)
-		return '<Item class="' .. cname .. '" referent="' .. GetRef(inst) .. '"><Properties>'
+	local function aU(aV, aW)
+		return '<Item class="' .. aV .. '" referent="' .. v(aW) .. '"><Properties>'
 	end
-	local function ReturnProperty(tag, pname, val)
-		return "<" .. tag .. ' name="' .. pname .. '">' .. val .. "</" .. tag .. ">"
+	local function aV(aW, aX, aY)
+		return "<" .. aW .. ' name="' .. aX .. '">' .. aY .. "</" .. aW .. ">"
 	end
-	local function ReturnValueAndTag(v, vtype, desc)
-		local value, tag = (desc or XML_Descriptors[vtype])(v)
-		return value, tag or vtype
+	local function aW(aX, aY, aZ)
+		local aa, ab = (aZ or G[aY])(aX)
+		return aa, ab or aY
 	end
-	local function InheritsFix(fixes, cname, inst)
-		local fix = fixes[cname]
-		if fix then
-			return fix
-		elseif fix == nil then
-			for c_name, f in fixes do
-				if inst:IsA(c_name) then
-					return f
+	local function aX(aY, aZ, aa)
+		local ab = aY[aZ]
+		if ab then
+			return ab
+		elseif ab == nil then
+			for ac, ad in aY do
+				if aa:IsA(ac) then
+					return ad
 				end
 			end
 		end
 	end
-	local function GetInheritedProps(cname)
-		local props = {}
-		local layer = ClassList[cname]
-		while layer do
-			local lprops = layer.Properties
-			table.move(lprops, 1, #lprops, #props + 1, props)
-			layer = ClassList[layer.Superclass]
+	local function aY(aZ)
+		local aa = {}
+		local ab = H[aZ]
+		while ab do
+			local ac = ab.Properties
+			table.move(ac, 1, #ac, #aa + 1, aa)
+			ab = H[ab.Superclass]
 		end
-		inhProps[cname] = props
-		return props
+		q[aZ] = aa
+		return aa
 	end
-	local CHUNK_LIMIT = 200 * 1024 * 1024
-	local function save_cache(final)
-		local s = table.concat(sBuf)
-		currentstr ..= s
-		local s_len = #s
-		totalsize += s_len
-		currentsize += s_len
-		table.clear(sBuf)
-		sBufSize = 1
-		if CHUNK_LIMIT < currentsize or final then
-			table.insert(chunks, { size = currentsize, str = currentstr })
-			currentstr, currentsize = "", 0
+	local aZ = 200 * 1024 * 1024
+	local function ba(bb)
+		local bc = table.concat(Q)
+		M ..= bc
+		local bd = #bc
+		O += bd
+		N += bd
+		table.clear(Q)
+		R = 1
+		if aZ < N or bb then
+			table.insert(P, { size = N, str = M })
+			M, N = "", 0
 		end
-		if statTxt then
-			statTxt.Text = "Saving.. Size: " .. get_size_format()
+		if T then
+			T.Text = "Saving.. Size: " .. aG()
 		end
-		wait_for_render()
+		aI()
 	end
-	local function save_specific(cname, props)
-		local ref = Instance.new(cname)
-		local item = ReturnItem(ref.ClassName, ref)
-		for pname, v in props do
-			local wlisted, val, tag
-			if "Source" == pname then
-				tag = "ProtectedString"
-				val = XML_Descriptors.__PROTECTEDSTRING(v)
-				wlisted = true
-			elseif "Name" == pname then
-				wlisted = true
-				val, tag = ReturnValueAndTag(v, "string")
+	local function bb(bc, bd)
+		local be = Instance.new(bc)
+		local bf = aU(be.ClassName, be)
+		for bg, bh in bd do
+			local bi, bj, bk
+			if "Source" == bg then
+				bk = "ProtectedString"
+				bj = G.__PROTECTEDSTRING(bh)
+				bi = true
+			elseif "Name" == bg then
+				bi = true
+				bj, bk = aW(bh, "string")
 			end
-			if wlisted then
-				item ..= ReturnProperty(tag, pname, val)
+			if bi then
+				bf ..= aV(bk, bg, bj)
 			end
 		end
-		item ..= "</Properties>"
-		return item
+		bf ..= "</Properties>"
+		return bf
 	end
-	local function save_hierarchy(hier)
-		for _, inst in hier do
-			if ignNotArch and not inst.Archivable then
+	local function bc(bd)
+		for _, be in bd do
+			if ai and not be.Archivable then
 				continue
 			end
-			local skip = ignList[inst]
-			if skip then
+			local bf = Z[be]
+			if bf then
 				continue
 			end
-			local cname = inst.ClassName
-			local instName = inst.Name
+			local bg = be.ClassName
+			local bh = be.Name
 			do
-				local onIgn = ignList[cname]
-				if onIgn and (onIgn == true or onIgn[instName]) then
+				local bi = Z[bg]
+				if bi and (bi == true or bi[bh]) then
 					continue
 				end
 			end
-			if not decIgnoring then
-				decIgnoring = decIgnore[inst]
-				if decIgnoring == nil then
-					local decIgnored = decIgnore[cname]
-					if decIgnored then
-						decIgnoring = decIgnored == true or decIgnored[instName]
+			if not at then
+				at = Y[be]
+				if at == nil then
+					local bi = Y[bg]
+					if bi then
+						at = bi == true or bi[bh]
 					end
 				end
-				if decIgnoring then
-					decIgnoring = inst
-				elseif decIgnoring == false then
-					decIgnoring = 1
+				if at then
+					at = be
+				elseif at == false then
+					at = 1
 				end
 			end
-			local instOvr, cnameOvr, ctagOvr
+			local bi, bj, bk
 			do
-				local fix = ncFixes[cname]
-				if fix then
-					if saveNC then
-						cname, instOvr = fix, replaceClassName(inst, instName, cname)
+				local bl = ab[bg]
+				if bl then
+					if al then
+						bg, bi = bl, aQ(be, bh, bg)
 					else
 						continue
 					end
 				else
-					if unionsAsParts and inst:IsA("PartOperation") then
-						cname, instOvr = "Part", replaceClassName(inst, instName, cname)
-						cnameOvr = "BasePart"
-					elseif not ClassList[cname] then
-						if DEBUG then
-							DEBUG("Class not Found", cname)
+					if am and be:IsA("PartOperation") then
+						bg, bi = "Part", aQ(be, bh, bg)
+						bj = "BasePart"
+					elseif not H[bg] then
+						if ac then
+							ac("Class not Found", bg)
 						end
-						ctagOvr = cname
-						cname = "Folder"
+						bk = bg
+						bg = "Folder"
 					end
 				end
 			end
-			if not instOvr then
-				instOvr = instOverrides[inst]
+			if not bi then
+				bi = X[be]
 			end
-			if instOvr and instOvr.__SaveSpecific then
-				sBuf[sBufSize] = save_specific(cname, instOvr.Properties)
-				sBufSize += 1
+			if bi and bi.__SaveSpecific then
+				Q[R] = bb(bg, bi.Properties)
+				R += 1
 			else
-				sBuf[sBufSize] = ReturnItem(ctagOvr or cname, inst)
-				sBufSize += 1
-				if not (ignPropsNotScript and not isLuaSourceContainer(inst)) then
-					local defInst, newDefInst
-					if ignDefProps then
-						defInst = defInsts[cname]
-						if not defInst then
-							local cTags = ClassList[cname].Tags
-							if not (cTags and cTags.NotCreatable) then
-								newDefInst = Instance.new(cname)
-								defInst = {}
-								defInsts[cname] = defInst
-							elseif DEBUG then
-								DEBUG("Unable to create default Instance", cname)
+				Q[R] = aU(bk or bg, be)
+				R += 1
+				if not (aj and not aA(be)) then
+					local bl, bm
+					if ah then
+						bl = r[bg]
+						if not bl then
+							local bn = H[bg].Tags
+							if not (bn and bn.NotCreatable) then
+								bm = Instance.new(bg)
+								bl = {}
+								r[bg] = bl
+							elseif ac then
+								ac("Unable to create default Instance", bg)
 							end
 						end
 					end
-					local props
+					local bn
 					do
-						local cls = cnameOvr or cname
-						props = inhProps[cls]
-						if not props then
-							props = GetInheritedProps(cls)
-							inhProps[cls] = props
+						local bo = bj or bg
+						bn = q[bo]
+						if not bn then
+							bn = aY(bo)
+							q[bo] = bn
 						end
 					end
-					for _, prop in props do
-						local pname = prop.Name
-						if ignProps[pname] then
+					for _, bo in bn do
+						local bp = bo.Name
+						if aa[bp] then
 							continue
 						end
-						local vtype = prop.ValueType
-						if ignSharedStrs and vtype == "SharedString" then
+						local bq = bo.ValueType
+						if aq and bq == "SharedString" then
 							continue
 						end
-						local spec, cat, opt = prop.Special, prop.Category, prop.Optional
-						local raw = ReadProperty(inst, prop, pname, spec, cat, opt)
-						if raw == __BREAK then
-							local ok, res = pcall(getHP_fallback, inst, pname)
-							if res == nil and not opt then
-								ok = nil
+						local br, bs, bt = bo.Special, bo.Category, bo.Optional
+						local bu = aT(be, bo, bp, br, bs, bt)
+						if bu == aS then
+							local bv, bw = pcall(n, be, bp)
+							if bw == nil and not bt then
+								bv = nil
 							end
-							if ok then
-								raw = res
+							if bv then
+								bu = bw
 							else
-								local fallback = prop.Fallback
-								if fallback then
-									ok, res = pcall(fallback, inst)
-									if ok then
-										raw = res
+								local bx = bo.Fallback
+								if bx then
+									bv, bw = pcall(bx, be)
+									if bv then
+										bu = bw
 									else
-										if DEBUG then
-											DEBUG("Fix Failed", pname)
+										if ac then
+											ac("Fix Failed", bp)
 										end
 										continue
 									end
@@ -1812,483 +1806,483 @@ local function synsaveinstance(opts, opts2)
 								end
 							end
 						end
-						if sharedStrOvr and vtype == "BinaryString" then
-							vtype = "SharedString"
+						if ar and bq == "BinaryString" then
+							bq = "SharedString"
 						end
-						if defInst and not prop.Special and not (pname == "Source" and isLuaSourceContainer(inst)) then
-							if newDefInst then
-								defInst[pname] = index(newDefInst, pname)
+						if bl and not bo.Special and not (bp == "Source" and aA(be)) then
+							if bm then
+								bl[bp] = w(bm, bp)
 							end
-							if defInst[pname] == raw then
+							if bl[bp] == bu then
 								continue
 							end
 						end
-						local tag, val
-						if cat == "Class" then
-							tag = "Ref"
-							if raw then
-								if saveNCEnabled then
-									local fix = ncFixes[raw.ClassName]
-									if fix and (pname == "PlayerToHideFrom" or vtype ~= "Instance" and vtype ~= fix) then
+						local by, bz
+						if bs == "Class" then
+							by = "Ref"
+							if bu then
+								if ay then
+									local bA = ab[bu.ClassName]
+									if bA and (bp == "PlayerToHideFrom" or bq ~= "Instance" and bq ~= bA) then
 										continue
 									end
 								end
-								val = GetRef(raw)
+								bz = v(bu)
 							else
-								val = "null"
+								bz = "null"
 							end
-						elseif cat == "Enum" then
-							val, tag = XML_Descriptors.__ENUM(raw)
+						elseif bs == "Enum" then
+							bz, by = G.__ENUM(bu)
 						else
-							local desc = XML_Descriptors[vtype]
-							if desc then
-								val, tag = ReturnValueAndTag(raw, vtype, desc)
-							elseif "ProtectedString" == vtype then
-								tag = vtype
-								if pname == "Source" then
-									if decIgnoring then
-										if decIgnoring == 1 then
-											decIgnoring = nil
+							local bA = G[bq]
+							if bA then
+								bz, by = aW(bu, bq, bA)
+							elseif "ProtectedString" == bq then
+								by = bq
+								if bp == "Source" then
+									if at then
+										if at == 1 then
+											at = nil
 										end
-										val = "-- Ignored"
+										bz = "-- Ignored"
 									else
-										local shouldDec = true
-										local linkSrc
-										local linkSrcURL = inst.LinkedSource
-										local hasLinkSrc = linkSrcURL ~= ""
-										local linkSrcType
-										if hasLinkSrc then
-											local path = inst:GetFullName()
-											if recScripts then
-												table.insert(recScripts, path)
+										local bB = true
+										local bC
+										local bD = be.LinkedSource
+										local bE = bD ~= ""
+										local bF
+										if bE then
+											local bG = be:GetFullName()
+											if az then
+												table.insert(az, bG)
 											end
-											linkSrc = string.match(linkSrcURL, "%w+$")
-											if linkSrc then
-												if scrCache then
-													local cached = decCache[linkSrc]
-													if cached then
-														val = cached
-														shouldDec = nil
+											bC = string.match(bD, "%w+$")
+											if bC then
+												if ao then
+													local bH = as[bC]
+													if bH then
+														bz = bH
+														bB = nil
 													end
 												end
-												if shouldDec then
-													if decJobless then
-														val = "-- Not found in LinkedSource ScriptCache"
-														shouldDec = nil
+												if bB then
+													if an then
+														bz = "-- Not found in LinkedSource ScriptCache"
+														bB = nil
 													end
-													linkSrcType = string.find(linkSrc, "%a") and "hash" or "id"
-													local asset = linkSrcType .. "=" .. linkSrc
-													local ok, src = pcall(function()
-														return game:HttpGet("https://assetdelivery.roproxy.com/v1/asset/?" .. asset)
+													bF = a(bC, "%a") and "hash" or "id"
+													local bI = bF .. "=" .. bC
+													local bJ, bK = pcall(function()
+														return game:HttpGet("https://assetdelivery.roproxy.com/v1/asset/?" .. bI)
 													end)
-													if ok and filterLinkedSource(src) then
-														if scrCache then
-															decCache[linkSrc] = src
+													if bJ and aP(bK) then
+														if ao then
+															as[bC] = bK
 														end
-														val = src
-														shouldDec = nil
+														bz = bK
+														bB = nil
 													end
 												end
 											else
-												warn("FAILED TO EXTRACT ORIGINAL SCRIPT SOURCE (OPEN A GITHUB ISSUE): ", inst:GetFullName(), linkSrcURL)
+												warn("FAILED TO EXTRACT ORIGINAL SCRIPT SOURCE (OPEN A GITHUB ISSUE): ", be:GetFullName(), bD)
 											end
 										end
-										if shouldDec then
-											local isLocal = inst:IsA("LocalScript")
-											if isLocal and inst.RunContext == Enum.RunContext.Server or not isLocal and inst:IsA("Script") and inst.RunContext ~= Enum.RunContext.Client then
-												val = "-- [FilteringEnabled] Server Scripts are IMPOSSIBLE to save"
+										if bB then
+											local bL = be:IsA("LocalScript")
+											if bL and be.RunContext == Enum.RunContext.Server or not bL and be:IsA("Script") and be.RunContext ~= Enum.RunContext.Client then
+												bz = "-- [FilteringEnabled] Server Scripts are IMPOSSIBLE to save"
 											else
-												val = decompileLua(inst)
-												if SaveBytecode then
-													local out = SaveBytecode(inst)
-													if out then
-														val = out .. val
+												bz = av(be)
+												if aN then
+													local bM = aN(be)
+													if bM then
+														bz = bM .. bz
 													end
 												end
 											end
 										end
-										val = (hasLinkSrc and "-- Original Source: https://assetdelivery.roblox.com/v1/asset/?" .. (linkSrcType or "id") .. "=" .. (linkSrc or linkSrcURL) .. "\n\n" or "") .. val
+										bz = (bE and "-- Original Source: https://assetdelivery.roblox.com/v1/asset/?" .. (bF or "id") .. "=" .. (bC or bD) .. "\n\n" or "") .. bz
 									end
 								end
-								val = XML_Descriptors.__PROTECTEDSTRING(val)
+								bz = G.__PROTECTEDSTRING(bz)
 							else
-								if opt then
-									desc = XML_Descriptors[opt]
-									if desc then
-										if raw == nil then
+								if bt then
+									bA = G[bt]
+									if bA then
+										if bu == nil then
 											continue
 										else
-											val, tag = ReturnValueAndTag(raw, vtype, desc)
+											bz, by = aW(bu, bq, bA)
 										end
 									end
 								end
 							end
 						end
-						if tag then
-							sBuf[sBufSize] = ReturnProperty(tag, pname, val)
-							sBufSize += 1
+						if by then
+							Q[R] = aV(by, bp, bz)
+							R += 1
 						else
-							warn("UNSUPPORTED TYPE (OPEN A GITHUB ISSUE): ", vtype, cname, pname)
+							warn("UNSUPPORTED TYPE (OPEN A GITHUB ISSUE): ", bq, bg, bp)
 						end
 					end
 				end
-				sBuf[sBufSize] = "</Properties>"
-				sBufSize += 1
-				if cacheInterval < sBufSize then
-					save_cache()
+				Q[R] = "</Properties>"
+				R += 1
+				if ae < R then
+					ba()
 				end
 			end
-			if skip ~= false then
-				local children = instOvr and instOvr.__Children or inst:GetChildren()
-				if #children ~= 0 then
-					save_hierarchy(children)
+			if bf ~= false then
+				local bd = bi and bi.__Children or be:GetChildren()
+				if #bd ~= 0 then
+					bc(bd)
 				end
 			end
-			if decIgnoring and decIgnoring == inst then
-				decIgnoring = nil
+			if at and at == be then
+				at = nil
 			end
-			sBuf[sBufSize] = "</Item>"
-			sBufSize += 1
+			Q[R] = "</Item>"
+			R += 1
 		end
 	end
-	local function save_extra(name, hier, cname, src)
-		sBuf[sBufSize] = save_specific((cname or "Folder"), { Name = name, Source = src })
-		sBufSize += 1
-		if hier then
-			save_hierarchy(hier)
+	local function bd(be, bf, bg, bh)
+		Q[R] = bb((bg or "Folder"), { Name = be, Source = bh })
+		R += 1
+		if bf then
+			bc(bf)
 		end
-		sBuf[sBufSize] = "</Item>"
-		sBufSize += 1
+		Q[R] = "</Item>"
+		R += 1
 	end
-	local function save_game()
+	local function be()
 		do
-			if isModel then
-				header ..= '<Meta name="ExplicitAutoJoints">true</Meta>'
+			if ag then
+				S ..= '<Meta name="ExplicitAutoJoints">true</Meta>'
 			end
-			wf(fname, header)
+			i(aw, S)
 		end
-		saveNCEnabled = saveNC or (isoLP or isoLPC) and isoLP or isoP or nilInsts and global_container.getnilinstances
-		save_hierarchy(saveList)
-		if isoLP or isoLPC then
-			local lp = service.Players.LocalPlayer
-			if lp then
-				if isoLP then
-					saveNC = true
-					save_extra("LocalPlayer", lp:GetChildren())
+		ay = al or (aB or aC) and aB or aD or aF and c.getnilinstances
+		bc(au)
+		if aB or aC then
+			local bf = m.Players.LocalPlayer
+			if bf then
+				if aB then
+					al = true
+					bd("LocalPlayer", bf:GetChildren())
 				end
-				if isoLPC then
-					local lpc = lp.Character
-					if lpc then
-						save_extra("LocalPlayer Character", lpc:GetChildren())
+				if aC then
+					local bg = bf.Character
+					if bg then
+						bd("LocalPlayer Character", bg:GetChildren())
 					end
 				end
 			end
 		end
-		if isoSP then
-			save_extra("StarterPlayer", service.StarterPlayer:GetChildren())
+		if aE then
+			bd("StarterPlayer", m.StarterPlayer:GetChildren())
 		end
-		if isoP then
-			saveNC = true
-			save_extra("Players", service.Players:GetChildren())
+		if aD then
+			al = true
+			bd("Players", m.Players:GetChildren())
 		end
-		if nilInsts and global_container.getnilinstances then
-			local nilInsts, nilInstsSize = {}, 1
-			local nilFixes = OPTS.NilInstancesFixes
-			for _, inst in global_container.getnilinstances() do
-				if inst == game then
-					inst = nil
+		if aF and c.getnilinstances then
+			local bf, bg = {}, 1
+			local bh = U.NilInstancesFixes
+			for _, bi in c.getnilinstances() do
+				if bi == game then
+					bi = nil
 				else
-					local cname = inst.ClassName
-					local fix = InheritsFix(nilFixes, cname, inst)
-					if fix then
-						inst = fix(inst, instOverrides)
+					local bj = bi.ClassName
+					local bk = aX(bh, bj, bi)
+					if bk then
+						bi = bk(bi, X)
 					end
-					local C = ClassList[cname]
-					if C then
-						local cTags = C.Tags
-						if cTags and cTags.Service then
-							inst = nil
+					local bl = H[bj]
+					if bl then
+						local bm = bl.Tags
+						if bm and bm.Service then
+							bi = nil
 						end
 					end
 				end
-				if inst then
-					nilInsts[nilInstsSize] = inst
-					nilInstsSize += 1
+				if bi then
+					bf[bg] = bi
+					bg += 1
 				end
 			end
-			saveNC = true
-			save_extra("Nil Instances", nilInsts)
+			al = true
+			bd("Nil Instances", bf)
 		end
-		if OPTS.ReadMe then
-			save_extra("README", nil, "Script", "--[[\n" .. (#recScripts ~= 0 and "IMPORTANT: Original Source of these Scripts was Recovered: " .. service.HttpService:JSONEncode(recScripts) .. "\n" or "") .. "This file was generated with the following settings:\n" .. service.HttpService:JSONEncode(OPTS) .. "\n\nElapsed time: " .. os.clock() - t_start .. " PlaceId: " .. game.PlaceId .. " PlaceVersion: " .. game.PlaceVersion .. " Client Version: " .. version() .. " Executor: " .. (getId and table.concat({ getId() }, " ") or "Unknown") .. "\n]]")
+		if U.ReadMe then
+			bd("README", nil, "Script", "--[[\n" .. (#az ~= 0 and "IMPORTANT: Original Source of these Scripts was Recovered: " .. m.HttpService:JSONEncode(az) .. "\n" or "") .. "This file was generated with the following settings:\n" .. m.HttpService:JSONEncode(U) .. "\n\nElapsed time: " .. os.clock() - ax .. " PlaceId: " .. game.PlaceId .. " PlaceVersion: " .. game.PlaceVersion .. " Client Version: " .. version() .. " Executor: " .. (d and table.concat({ d() }, " ") or "Unknown") .. "\n]]")
 		end
 		do
-			local t = { "<SharedStrings>" }
-			for identifier, value in sharedStrs do
-				table.insert(t, '<SharedString md5="' .. identifier .. '">' .. value .. "</SharedString>")
+			local bf = { "<SharedStrings>" }
+			for bg, bh in o do
+				table.insert(bf, '<SharedString md5="' .. bg .. '">' .. bh .. "</SharedString>")
 			end
-			if 1 < #t then
-				sBuf[sBufSize] = table.concat(t)
-				sBufSize += 1
-				sBuf[sBufSize] = "</SharedStrings>"
-				sBufSize += 1
+			if 1 < #bf then
+				Q[R] = table.concat(bf)
+				R += 1
+				Q[R] = "</SharedStrings>"
+				R += 1
 			end
 		end
-		sBuf[sBufSize] = "</roblox>"
-		sBufSize += 1
-		save_cache(true)
+		Q[R] = "</roblox>"
+		R += 1
+		ba(true)
 		do
-			if OPTS.Anonymous then
-				local lp = service.Players.LocalPlayer
-				if lp then
-					local function gsubi(input, search, replacement)
-						local inputLower = string.lower(input)
-						search = string.lower(search)
-						local lastFinish = 0
-						local subStrings = {}
-						local search_len = #search
-						local input_len = #input
-						while search_len <= input_len - lastFinish do
-							local init = lastFinish + 1
-							local start, finish = string.find(inputLower, search, init, true)
-							if start == nil then
+			if U.Anonymous then
+				local bf = m.Players.LocalPlayer
+				if bf then
+					local function bg(bh, bi, bj)
+						local bk = string.lower(bh)
+						bi = string.lower(bi)
+						local bl = 0
+						local bm = {}
+						local bn = #bi
+						local bo = #bh
+						while bn <= bo - bl do
+							local bp = bl + 1
+							local bq, br = string.find(bk, bi, bp, true)
+							if bq == nil then
 								break
 							end
-							table.insert(subStrings, string.sub(input, init, start - 1))
-							lastFinish = finish
+							table.insert(bm, string.sub(bh, bp, bq - 1))
+							bl = br
 						end
-						if lastFinish == 0 then
-							return input
+						if bl == 0 then
+							return bh
 						end
-						table.insert(subStrings, string.sub(input, lastFinish + 1))
-						return table.concat(subStrings, replacement)
+						table.insert(bm, string.sub(bh, bl + 1))
+						return table.concat(bm, bj)
 					end
-					local anon = type(OPTS.Anonymous) == "table" and OPTS.Anonymous or { UserId = "1", Name = "Roblox" }
-					for _, c in chunks do
-						c.str = gsubi(string.gsub(c.str, lp.UserId, anon.UserId), lp.Name, anon.Name)
+					local bh = type(U.Anonymous) == "table" and U.Anonymous or { UserId = "1", Name = "Roblox" }
+					for _, bi in P do
+						bi.str = bg(string.gsub(bi.str, bf.UserId, bh.UserId), bf.Name, bh.Name)
 					end
 				end
 			end
-			local cb = OPTS.Callback
-			if cb then
-				local fullStr = header
-				for _, c in chunks do
-					fullStr ..= c.str
+			local bj = U.Callback
+			if bj then
+				local bk = S
+				for _, bl in P do
+					bk ..= bl.str
 				end
-				cb(fullStr, chunks, totalsize)
-			elseif OPTS.AlternativeWritefile and af then
-				local SEGMENT_SIZE = 4145728
-				local totallen, currentlen = math.ceil(totalsize / SEGMENT_SIZE), 1
-				for _, c in chunks do
-					local length = math.ceil(c.size / SEGMENT_SIZE)
-					for i = 1, length do
-						local s = string.sub(c.str, (i - 1) * SEGMENT_SIZE + 1, i * SEGMENT_SIZE)
-						run_with_loading("Writing to File " .. math.round(currentlen / totallen * 100) .. "% (Depends on Exec)", nil, true, af, fname, s)
-						currentlen += 1
-						if i ~= length then
+				bj(bk, P, O)
+			elseif U.AlternativeWritefile and g then
+				local bl = 4145728
+				local bm, bn = math.ceil(O / bl), 1
+				for _, bo in P do
+					local bp = math.ceil(bo.size / bl)
+					for bq = 1, bp do
+						local br = string.sub(bo.str, (bq - 1) * bl + 1, bq * bl)
+						aK("Writing to File " .. math.round(bn / bm * 100) .. "% (Depends on Exec)", nil, true, g, aw, br)
+						bn += 1
+						if bq ~= bp then
 							task.wait()
 						end
 					end
 				end
 			else
-				local fullStr = header
-				for _, c in chunks do
-					fullStr ..= c.str
+				local bk = S
+				for _, bl in P do
+					bk ..= bl.str
 				end
-				run_with_loading("Writing " .. get_size_format() .. " to File (Depends on Exec)", nil, true, wf, fname, fullStr)
+				aK("Writing " .. aG() .. " to File (Depends on Exec)", nil, true, i, aw, bk)
 			end
 		end
-		table.clear(sharedStrs)
+		table.clear(o)
 	end
-	local Connections
+	local bf
 	do
-		local Players = service.Players
-		if ignList.Model ~= true then
-			Connections = {}
-			local function ignoreCharacter(player)
-				table.insert(Connections, player.CharacterAdded:Connect(function(character)
-					ignList[character] = true
+		local bg = m.Players
+		if Z.Model ~= true then
+			bf = {}
+			local function bh(bi)
+				table.insert(bf, bi.CharacterAdded:Connect(function(bj)
+					Z[bj] = true
 				end))
-				local Character = player.Character
-				if Character then
-					ignList[Character] = true
+				local bj = bi.Character
+				if bj then
+					Z[bj] = true
 				end
 			end
-			if OPTS.RemovePlayerCharacters then
-				table.insert(Connections, Players.PlayerAdded:Connect(function(player)
-					ignoreCharacter(player)
+			if U.RemovePlayerCharacters then
+				table.insert(bf, bg.PlayerAdded:Connect(function(bi)
+					bh(bi)
 				end))
-				for _, player in Players:GetPlayers() do
-					ignoreCharacter(player)
+				for _, bi in bg:GetPlayers() do
+					bh(bi)
 				end
 			else
-				ignNotArch = false
-				if isoLPC then
+				ai = false
+				if aC then
 					task.spawn(function()
-						ignoreCharacter(GetLocalPlayer())
+						bh(aO())
 					end)
 				end
 			end
 		end
-		if isoLP and ignList.Player ~= true then
+		if aB and Z.Player ~= true then
 			task.spawn(function()
-				ignList[GetLocalPlayer()] = true
+				Z[aO()] = true
 			end)
 		end
 	end
-	if isoSP then
-		ignList.StarterPlayer = false
+	if aE then
+		Z.StarterPlayer = false
 	end
-	if isoP then
-		ignList.Players = false
+	if aD then
+		Z.Players = false
 	end
-	if OPTS.ShowStatus then
+	if U.ShowStatus then
 		do
-			local Exists = GLOBAL_ENV._statustext
-			if Exists then
-				Exists:Destroy()
+			local bg = I._statustext
+			if bg then
+				bg:Destroy()
 			end
 		end
-		local StatusGui = Instance.new("ScreenGui")
-		GLOBAL_ENV._statustext = StatusGui
-		StatusGui.DisplayOrder = 2e9
+		local bg = Instance.new("ScreenGui")
+		I._statustext = bg
+		bg.DisplayOrder = 2e9
 		pcall(function()
-			StatusGui.OnTopOfCoreBlur = true
+			bg.OnTopOfCoreBlur = true
 		end)
-		statTxt = Instance.new("TextLabel")
-		statTxt.Text = "Saving..."
-		statTxt.BackgroundTransparency = 1
-		statTxt.Font = Enum.Font.Code
-		statTxt.AnchorPoint = Vector2.new(1)
-		statTxt.Position = UDim2.new(1)
-		statTxt.Size = UDim2.new(0.3, 0, 0, 20)
-		statTxt.TextColor3 = Color3.new(1, 1, 1)
-		statTxt.TextScaled = true
-		statTxt.TextStrokeTransparency = 0.7
-		statTxt.TextXAlignment = Enum.TextXAlignment.Right
-		statTxt.TextYAlignment = Enum.TextYAlignment.Top
-		statTxt.Parent = StatusGui
-		local function randomString()
-			local length = math.random(10, 20)
-			local randomarray = table.create(length)
-			for i = 1, length do
-				randomarray[i] = string.char(math.random(32, 126))
+		T = Instance.new("TextLabel")
+		T.Text = "Saving..."
+		T.BackgroundTransparency = 1
+		T.Font = Enum.Font.Code
+		T.AnchorPoint = Vector2.new(1)
+		T.Position = UDim2.new(1)
+		T.Size = UDim2.new(0.3, 0, 0, 20)
+		T.TextColor3 = Color3.new(1, 1, 1)
+		T.TextScaled = true
+		T.TextStrokeTransparency = 0.7
+		T.TextXAlignment = Enum.TextXAlignment.Right
+		T.TextYAlignment = Enum.TextYAlignment.Top
+		T.Parent = bg
+		local function bh()
+			local bi = math.random(10, 20)
+			local bj = table.create(bi)
+			for bk = 1, bi do
+				bj[bk] = string.char(math.random(32, 126))
 			end
-			return table.concat(randomarray)
+			return table.concat(bj)
 		end
-		if global_container.gethui then
-			StatusGui.Name = randomString()
-			StatusGui.Parent = global_container.gethui()
+		if c.gethui then
+			bg.Name = bh()
+			bg.Parent = c.gethui()
 		else
-			if global_container.protectgui then
-				StatusGui.Name = randomString()
-				global_container.protectgui(StatusGui)
-				StatusGui.Parent = game:GetService("CoreGui")
+			if c.protectgui then
+				bg.Name = bh()
+				c.protectgui(bg)
+				bg.Parent = game:GetService("CoreGui")
 			else
-				local RobloxGui = game:GetService("CoreGui"):FindFirstChild("RobloxGui")
-				if RobloxGui then
-					StatusGui.Parent = RobloxGui
+				local bi = game:GetService("CoreGui"):FindFirstChild("RobloxGui")
+				if bi then
+					bg.Parent = bi
 				else
-					StatusGui.Name = randomString()
-					StatusGui.Parent = game:GetService("CoreGui")
+					bg.Name = bh()
+					bg.Parent = game:GetService("CoreGui")
 				end
 			end
 		end
 	end
 	do
-		local SafeMode = OPTS.SafeMode
-		if SafeMode then
+		local bg = U.SafeMode
+		if bg then
 			task.spawn(function()
-				local lp = GetLocalPlayer()
-				local PlayerScripts = lp:FindFirstChild("PlayerScripts")
-				if PlayerScripts then
-					local function construct_InstanceOverride(inst)
-						local children = inst:GetChildren()
-						instOverrides[inst] = {
-							__Children = children,
+				local bh = aO()
+				local bi = bh:FindFirstChild("PlayerScripts")
+				if bi then
+					local function bj(bk)
+						local bl = bk:GetChildren()
+						X[bk] = {
+							__Children = bl,
 						}
-						for _, child in children do
-							construct_InstanceOverride(child)
+						for _, bm in bl do
+							bj(bm)
 						end
 					end
-					construct_InstanceOverride(PlayerScripts)
-					instOverrides[lp] = {
-						__Children = lp:GetChildren(),
-						Properties = { Name = "[" .. lp.ClassName .. "] " .. lp.Name },
+					bj(bi)
+					X[bh] = {
+						__Children = bh:GetChildren(),
+						Properties = { Name = "[" .. bh.ClassName .. "] " .. bh.Name },
 					}
 				end
-				lp:Kick("\n[SAFEMODE] Saving in Progress..\nPlease do NOT leave")
-				wait_for_render()
-				task.delay(10, service.GuiService.ClearError, service.GuiService)
+				bh:Kick("\n[SAFEMODE] Saving in Progress..\nPlease do NOT leave")
+				aI()
+				task.delay(10, m.GuiService.ClearError, m.GuiService)
 			end)
-			service.RunService:Set3dRenderingEnabled(false)
+			m.RunService:Set3dRenderingEnabled(false)
 		end
-		local anti_idle
-		if OPTS.AntiIdle then
+		local bh
+		if U.AntiIdle then
 			task.spawn(function()
-				local Idled = GetLocalPlayer().Idled
+				local bi = aO().Idled
 				if getconnections then
-					for _, c in getconnections(Idled) do
+					for _, bj in getconnections(bi) do
 						if not pcall(function()
-							c:Disable()
+							bj:Disable()
 						end) then
 							pcall(function()
-								c:Disconnect()
+								bj:Disconnect()
 							end)
 						end
 					end
 				end
-				anti_idle = Idled:Connect(function()
-					service.VirtualInputManager:SendMouseWheelEvent(service.UserInputService:GetMouseLocation().X, service.UserInputService:GetMouseLocation().Y, true, game)
+				bh = bi:Connect(function()
+					m.VirtualInputManager:SendMouseWheelEvent(m.UserInputService:GetMouseLocation().X, m.UserInputService:GetMouseLocation().Y, true, game)
 				end)
 			end)
 		end
-		t_start = os.clock()
-		local ok, err = xpcall(save_game, function(err)
-			return debug.traceback(err)
+		ax = os.clock()
+		local bi, bj = xpcall(be, function(bk)
+			return debug.traceback(bk)
 		end)
-		if SafeMode then
-			service.GuiService:ClearError()
-			service.RunService:Set3dRenderingEnabled(true)
+		if bg then
+			m.GuiService:ClearError()
+			m.RunService:Set3dRenderingEnabled(true)
 		end
-		if oldGetHP then
-			getHP = oldGetHP
+		if ak then
+			f = ak
 		end
-		if anti_idle then
-			anti_idle:Disconnect()
+		if bh then
+			bh:Disconnect()
 		end
-		if Connections then
-			for _, connection in Connections do
-				connection:Disconnect()
+		if bf then
+			for _, bk in bf do
+				bk:Disconnect()
 			end
 		end
-		GLOBAL_ENV[fname] = nil
-		if statTxt then
+		I[aw] = nil
+		if T then
 			task.spawn(function()
-				t_start = os.clock() - t_start
-				local Log10 = math.log10(t_start)
-				local ExtraTime = 10
-				if ok then
-					statTxt.Text = string.format("Saved! Time %.3f seconds; Size %s", t_start, get_size_format())
-					statTxt.TextColor3 = Color3.new(0, 1)
-					task.wait(Log10 * 2 + ExtraTime)
+				ax = os.clock() - ax
+				local bk = math.log10(ax)
+				local bl = 10
+				if bi then
+					T.Text = string.format("Saved! Time %.3f seconds; Size %s", ax, aG())
+					T.TextColor3 = Color3.new(0, 1)
+					task.wait(bk * 2 + bl)
 				else
-					if Loading then
-						task.cancel(Loading)
-						Loading = nil
+					if aJ then
+						task.cancel(aJ)
+						aJ = nil
 					end
-					statTxt.Text = "Failed! Check F9 console for more info"
-					statTxt.TextColor3 = Color3.new(1)
+					T.Text = "Failed! Check F9 console for more info"
+					T.TextColor3 = Color3.new(1)
 					warn("Error found while saving:")
-					warn(err)
-					task.wait(Log10 + ExtraTime)
+					warn(bj)
+					task.wait(bk + bl)
 				end
-				statTxt:Destroy()
+				T:Destroy()
 			end)
 		end
-		if OPTS.ShutdownWhenDone and ok then
+		if U.ShutdownWhenDone and bi then
 			game:Shutdown()
 		end
 	end
 end
-return synsaveinstance
+return J
